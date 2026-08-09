@@ -1,0 +1,12 @@
+# Local state: artifacts, run journal, saved connections, demo warehouse.
+backend/.ade-studio-data/
+backend/.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+frontend/node_modules/
+frontend/dist/
+.DS_Store
+frontend/tsconfig.tsbuildinfo
