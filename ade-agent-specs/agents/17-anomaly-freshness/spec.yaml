@@ -1,0 +1,68 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "17"
+  slug: anomaly-freshness
+  name: "Anomaly & Freshness Agent"
+  domain: quality
+  core_original_scope: false
+autonomy:
+  tier: L4
+  tier_name: "Autonomous (read/alert only)"
+  tier_definition: "Acts freely within its domain; humans audit after the fact. Domain must be non-mutating (detection, alerting, doc regeneration)."
+purpose: >
+  Learn normal volume, distribution, and latency behavior per asset and alert on deviation — the
+  dynamic complement to 16's static rules. Detection and evidence only; diagnosis is 19's job,
+  action is 20's.
+scope:
+  - "Baseline learning per asset: volume, arrival latency, distribution sketches, seasonality"
+  - "Deviation detection with severity scoring and evidence bundles (what changed, by how much, since when)"
+  - "Freshness SLO tracking against contract SLAs (13) with breach prediction"
+  - "Baseline hygiene: retraining windows, holiday/seasonal calendars, known-event suppression"
+non_goals:
+  - exclusion: "Static, human-meaningful rules with fixed thresholds"
+    owned_by: "16"  # Data Quality Rules Agent
+  - exclusion: "Diagnosing why the deviation happened"
+    owned_by: "19"  # Root Cause Analysis Agent
+  - exclusion: "Fixing anything"
+    owned_by: "20"  # Remediation / Self-Healing Agent
+  - exclusion: "Structural schema-change detection"
+    owned_by: "21"  # Schema Drift & Impact Agent
+inputs:
+  - "Pipeline run telemetry, row counts, arrival times"
+  - "Contract SLAs (13)"
+  - "Event calendar (maintenance windows, known bulk loads)"
+outputs:
+  - "Anomaly incidents with evidence bundle and severity"
+  - "Freshness SLO dashboards/feeds"
+  - "Baseline model registry with retrain history"
+tools:
+  - "Telemetry pipeline reader"
+  - "Statistical baseline library (deterministic)"
+  - "Incident API"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+    []
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "13 (Data Contract Agent)"
+  context_layer_requirements:
+  - "Telemetry retention sufficient for seasonal baselines"
+triggers:
+  - "Continuous (streaming/scheduled evaluation)"
+  - "Retrain schedule"
+  - "Calendar event registration"
+acceptance_criteria:
+  - "L4 autonomy covers detection and alerting only — no data or pipeline mutation ever"
+  - "Incident dedup: correlated deviations grouped before alerting"
+  - "Baselines never silently absorb confirmed-incident periods"
+evaluation:
+  - "Replay corpus with labeled incidents: recall >= 0.9 at precision >= 0.8"
+  - "Alert fatigue: incidents-per-real-issue ratio <= 1.5"
+kpis:
+  - "Mean time to detect (target: minutes)"
+  - "False-alert rate trend"
+escalation: >
+  Severity >= high routes to 19 and pages the on-call simultaneously; the agent never waits on its
+  own diagnosis to alert.

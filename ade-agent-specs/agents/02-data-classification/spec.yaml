@@ -1,0 +1,72 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "02"
+  slug: data-classification
+  name: "Data Classification Agent"
+  domain: discovery
+  core_original_scope: true
+autonomy:
+  tier: L1
+  tier_name: "Draft"
+  tier_definition: "Opens PRs / proposals. A human merges or approves every change. No self-application."
+  cap_note: "Capped at L1 in regulated environments regardless of accuracy."
+purpose: >
+  Classify every column by sensitivity (PII, PCI, PHI, CEII, NERC CIP scope, SOX relevance) and
+  business domain, using name + profiled content + surrounding context — not regex dictionaries
+  alone. Output drives masking, access, privacy, and evidence agents.
+scope:
+  - "Sensitivity labels from the enterprise taxonomy with per-column confidence and evidence"
+  - "Business-domain tagging (customer, meter, asset, finance, HR...) for routing and modeling"
+  - "Composite-risk detection: columns benign alone but identifying in combination"
+  - "Masking-policy recommendations mapped to label + role matrix"
+  - "Continuous re-classification when profiles change or new columns appear"
+non_goals:
+  - exclusion: "Creating or applying masking/row-access policies in the platform"
+    owned_by: "26"  # Access & Entitlement Agent
+  - exclusion: "Computing the statistics used as evidence"
+    owned_by: "01"  # Source Profiling Agent
+  - exclusion: "DSAR handling or retention verification"
+    owned_by: "27"  # Privacy & Retention Agent
+  - exclusion: "Assembling audit evidence packs"
+    owned_by: "28"  # Regulatory Evidence Agent
+inputs:
+  - "profile.json (01)"
+  - "Enterprise sensitivity taxonomy + regulatory scope map"
+  - "Glossary bindings when available (05)"
+outputs:
+  - "Column classification records: label, confidence, evidence, taxonomy version"
+  - "Masking recommendation list (advisory)"
+  - "Reclassification diff report on re-runs"
+tools:
+  - "Context-layer read/write"
+  - "Taxonomy service"
+  - "LLM classification with sampled values redacted-in-prompt per policy"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "01 (Source Profiling Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "05 (Glossary & Semantic Alignment Agent)"
+  context_layer_requirements:
+  - "Approved sensitivity taxonomy loaded"
+  - "Regulatory scope map (which systems fall under CIP/SOX/etc.)"
+triggers:
+  - "New/updated profile from 01"
+  - "Taxonomy version bump (triggers full re-run)"
+  - "New column detected by 21"
+acceptance_criteria:
+  - "Every column in scope has a label or an open review item — no silent gaps"
+  - "Sensitivity downgrades are impossible without recorded human approval"
+  - "Raw sample values never leave the platform boundary un-redacted"
+evaluation:
+  - "Auditor-validated golden set: precision >= 0.95 on sensitive labels, recall >= 0.97 (misses are worse than false alarms)"
+  - "Composite-risk set: known quasi-identifier pairs flagged at >= 0.9 recall"
+kpis:
+  - "% sensitive columns classified with evidence"
+  - "Steward review queue age"
+  - "Downgrade-without-approval count (must be 0)"
+escalation: >
+  Confidence below floor -> steward queue. Conflicting signals (dictionary says public, content
+  says PII) -> classify at the higher sensitivity and open review.

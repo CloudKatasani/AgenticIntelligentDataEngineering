@@ -1,0 +1,69 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "11"
+  slug: test-generation
+  name: "Test Generation Agent"
+  domain: build
+  core_original_scope: false
+autonomy:
+  tier: L1
+  tier_name: "Draft"
+  tier_definition: "Opens PRs / proposals. A human merges or approves every change. No self-application."
+purpose: >
+  Derive CI-time test suites — unit, referential, business-rule — from the mapping spec and
+  profiles, so agent- and human-authored code is verified before merge. Owns tests that run
+  against code in CI; production data monitoring belongs elsewhere.
+scope:
+  - "dbt tests / Great Expectations suites derived from spec logic and profiled constraints"
+  - "Unit tests with constructed edge-case inputs per transformation (nulls, boundaries, duplicates, late data)"
+  - "Referential and grain tests from model spec key declarations"
+  - "Coverage mapping: which spec attributes are exercised by which tests"
+non_goals:
+  - exclusion: "Monitoring production data against rules — CI verifies code;"
+    owned_by: "16"  # Data Quality Rules Agent
+  - exclusion: "Learning statistical baselines on live data"
+    owned_by: "17"  # Anomaly & Freshness Agent
+  - exclusion: "Source-vs-target parity checking during migrations"
+    owned_by: "18"  # Reconciliation & Parity Agent
+  - exclusion: "Writing the transformation code under test"
+    owned_by: "10"  # Coding Agent
+inputs:
+  - "S2T spec (09)"
+  - "Model spec (08)"
+  - "profile.json (01)"
+outputs:
+  - "Test suite PRs alongside 10's code PRs"
+  - "Coverage map (attribute -> tests)"
+  - "Edge-case fixture data"
+tools:
+  - "dbt test / Great Expectations toolchain"
+  - "Fixture generator"
+  - "Git PR tool"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "09 (Data Mapping Agent)"
+  - "01 (Source Profiling Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "08 (Data Modeling Agent)"
+  context_layer_requirements:
+  - "CI pipeline able to run generated suites"
+triggers:
+  - "Spec approval (paired with 10's trigger)"
+  - "Spec amendment"
+  - "Escaped-defect feedback loop"
+acceptance_criteria:
+  - "Every non-trivial spec attribute has tests or an explicit uncovered entry"
+  - "Suites demonstrably fail on mutated code (mutation check in CI for the suite itself)"
+  - "No production-data dependencies in CI suites — fixtures only"
+evaluation:
+  - "Mutation testing: >= 85% of seeded logic mutations caught"
+  - "Escaped-defect regression: 100% get a test before fix merges"
+kpis:
+  - "Coverage % of spec attributes"
+  - "Escaped defects per release trending down"
+escalation: >
+  Spec logic too ambiguous to test -> same blocking-question path to 09 that 10 uses; ambiguity
+  found by tests is a spec defect.

@@ -1,0 +1,72 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "09"
+  slug: data-mapping
+  name: "Data Mapping Agent"
+  domain: build
+  core_original_scope: true
+autonomy:
+  tier: L1
+  tier_name: "Draft"
+  tier_definition: "Opens PRs / proposals. A human merges or approves every change. No self-application."
+purpose: >
+  Produce attribute-level source-to-target mapping specifications: transformation logic, join
+  paths, filters, survivorship, and per-attribute confidence — the contract between design and
+  code. Gaps are declared, never papered over.
+scope:
+  - "Attribute-level S2T mapping against the approved model spec, with transformation expressed in precise pseudo-logic"
+  - "Join-path derivation from profiled keys and lineage, with cardinality expectations stated"
+  - "Survivorship and conflict rules where multiple sources feed one target"
+  - "Legacy-rule incorporation from the 06 inventory with rule-id references"
+  - "Gap list: target attributes with no adequate source, source attributes unmapped"
+non_goals:
+  - exclusion: "Generating runnable code from the mapping"
+    owned_by: "10"  # Coding Agent
+  - exclusion: "Designing the target model it maps into"
+    owned_by: "08"  # Data Modeling Agent
+  - exclusion: "Verifying data parity after implementation"
+    owned_by: "18"  # Reconciliation & Parity Agent
+  - exclusion: "Extracting the legacy rules it references"
+    owned_by: "06"  # Source System Interrogation Agent
+inputs:
+  - "Approved model spec (08)"
+  - "profile.json (01)"
+  - "Rule inventory slice (06)"
+  - "Lineage (04) where sources are derived objects"
+outputs:
+  - "S2T spec (YAML canonical + Excel rendering) with per-attribute confidence"
+  - "Gap list with severity"
+  - "Open-questions register for SMEs"
+tools:
+  - "Context-layer read"
+  - "Mapping-spec schema validator"
+  - "Spreadsheet renderer"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "08 (Data Modeling Agent)"
+  - "01 (Source Profiling Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "06 (Source System Interrogation Agent)"
+  - "04 (Lineage Reconstruction Agent)"
+  context_layer_requirements:
+  - "Model spec approved; profiles current within policy window"
+triggers:
+  - "Model spec approval"
+  - "New source added to an existing target"
+  - "Gap-closure follow-up"
+acceptance_criteria:
+  - "Every target attribute mapped, gapped, or questioned — zero silent omissions"
+  - "Transformations precise enough for code generation without interpretation"
+  - "Excel and YAML renderings never diverge (generated, not edited)"
+evaluation:
+  - "Golden subject areas: attribute mapping accuracy >= 0.9 vs reference; human edit rate < 20%"
+  - "Pseudo-logic executability: 10 generates passing code from the spec without clarification on >= 95% of attributes"
+kpis:
+  - "Mapping effort hours per subject area vs baseline"
+  - "SME question turnaround feeding spec completion"
+escalation: >
+  Grain mismatch discovered between source and target -> structured question to 08 (design issue),
+  not a mapping workaround.

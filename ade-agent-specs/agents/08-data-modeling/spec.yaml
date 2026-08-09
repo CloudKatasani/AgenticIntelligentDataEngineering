@@ -1,0 +1,69 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "08"
+  slug: data-modeling
+  name: "Data Modeling Agent"
+  domain: build
+  core_original_scope: true
+autonomy:
+  tier: L0
+  tier_name: "Advisory"
+  tier_definition: "Produces recommendations only. No artifact it emits is executable or applied; humans decide."
+purpose: >
+  Propose the target model for a domain — 3NF, dimensional, or Data Vault — selecting grain,
+  conformed dimensions, SCD strategy, and hub/link/satellite splits, with explicit rationale and
+  trade-offs. Advisory by design: architects decide, this agent argues.
+scope:
+  - "Pattern recommendation with reasoning anchored in profiles, glossary, workload intent, and platform"
+  - "Grain definition per fact/entity with the evidence for it"
+  - "Conformed-dimension identification across the domain and adjacent approved models"
+  - "SCD strategy per dimension attribute class"
+  - "ERD + machine-readable model spec (the artifact 07 and 09 consume)"
+non_goals:
+  - exclusion: "Generating physical DDL"
+    owned_by: "07"  # SchemaBuilder Agent
+  - exclusion: "Writing S2T mappings against the model"
+    owned_by: "09"  # Data Mapping Agent
+  - exclusion: "Defining metrics/semantic views on top of the model"
+    owned_by: "12"  # Semantic Layer Agent
+  - exclusion: "Binding terms — it consumes bindings from"
+    owned_by: "05"  # Glossary & Semantic Alignment Agent
+inputs:
+  - "profile.json (01)"
+  - "Glossary bindings (05)"
+  - "Workload intent (analytical patterns, consumers)"
+  - "Existing approved models (for conformance)"
+outputs:
+  - "Model spec (machine-readable) + ERD + written rationale with rejected alternatives"
+  - "Conformance report against existing dimensions"
+tools:
+  - "Context-layer read"
+  - "ERD renderer"
+  - "Model-spec schema validator"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "01 (Source Profiling Agent)"
+  - "05 (Glossary & Semantic Alignment Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "06 (Source System Interrogation Agent)"
+  context_layer_requirements:
+  - "At least one workload-intent statement from the domain owner"
+triggers:
+  - "Supervisor task: model domain X"
+  - "Material profile change invalidating an approved model's assumptions"
+acceptance_criteria:
+  - "Never presented as a decision — always as a recommendation with alternatives (L0)"
+  - "Grain statements present for every fact/entity"
+  - "Conformance to existing dimensions checked and reported"
+evaluation:
+  - "Architect-panel grading on golden domains: recommendation rated sound >= 85%"
+  - "Spec validity: 100% pass schema validation"
+kpis:
+  - "Recommendation acceptance rate (with or without amendment)"
+  - "Rework rate after 07/09 consume the spec"
+escalation: >
+  Conflicting workload intents from multiple consumers -> present the tension explicitly with
+  options, route to architecture board.

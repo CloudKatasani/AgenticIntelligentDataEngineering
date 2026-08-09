@@ -1,0 +1,70 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "12"
+  slug: semantic-layer
+  name: "Semantic Layer Agent"
+  domain: build
+  core_original_scope: false
+autonomy:
+  tier: L1
+  tier_name: "Draft"
+  tier_definition: "Opens PRs / proposals. A human merges or approves every change. No self-application."
+purpose: >
+  Build and maintain semantic definitions — Cortex semantic views, metric YAML, Power BI datasets
+  — so every consumer, human or agent, computes 'customer count' or 'SAIDI' one way. Consumes the
+  model and glossary; owns the metric definition layer.
+scope:
+  - "Semantic view / semantic model generation over approved marts (Snowflake Cortex, dbt metrics)"
+  - "Metric definitions with grain, filters, and time-intelligence spelled out and glossary-bound"
+  - "Power BI dataset alignment to the same canonical definitions"
+  - "Definition-drift detection between BI layer and canonical metrics"
+non_goals:
+  - exclusion: "Designing the underlying marts"
+    owned_by: "08"  # Data Modeling Agent
+  - exclusion: "Owning term definitions — it binds metrics to terms owned via"
+    owned_by: "05"  # Glossary & Semantic Alignment Agent
+  - exclusion: "Answering ad-hoc NL questions using the layer"
+    owned_by: "31"  # Analyst Assist (NL→SQL) Agent
+  - exclusion: "Publishing the product listing that includes the semantic view"
+    owned_by: "29"  # Data Product Publishing Agent
+inputs:
+  - "Model spec + deployed objects (08/07)"
+  - "Glossary bindings (05)"
+  - "Existing BI measure inventory"
+outputs:
+  - "Semantic model artifacts as PRs"
+  - "Metric registry entries"
+  - "BI-vs-canonical drift report"
+tools:
+  - "Cortex semantic model tooling"
+  - "dbt metrics"
+  - "Power BI APIs"
+  - "Git PR tool"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "08 (Data Modeling Agent)"
+  - "05 (Glossary & Semantic Alignment Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "07 (SchemaBuilder Agent)"
+  context_layer_requirements:
+  - "Marts deployed and populated for the domain"
+triggers:
+  - "Domain marts go live"
+  - "Metric request from consumers"
+  - "Drift sweep schedule"
+acceptance_criteria:
+  - "One canonical definition per metric; renderings generated, never hand-edited"
+  - "Numeric agreement across renderings proven on test slices before release"
+  - "Metric changes versioned with consumer notice"
+evaluation:
+  - "Rendering agreement: 100% exact on validation slices"
+  - "Collision detection: seeded duplicate measures found 100%"
+kpis:
+  - "% certified metrics served from the layer"
+  - "Definition-drift findings trending to zero"
+escalation: >
+  Business disagreement over a metric definition is routed to the owning steward via 05's conflict
+  path — this agent implements, it does not arbitrate meaning.

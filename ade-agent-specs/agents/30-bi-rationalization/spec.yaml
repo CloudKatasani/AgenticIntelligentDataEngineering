@@ -1,0 +1,69 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "30"
+  slug: bi-rationalization
+  name: "BI Rationalization Agent"
+  domain: consumption
+  core_original_scope: false
+autonomy:
+  tier: L1
+  tier_name: "Draft"
+  tier_definition: "Opens PRs / proposals. A human merges or approves every change. No self-application."
+purpose: >
+  Cluster near-duplicate reports and semantic overlap across the BI estate using lineage and usage
+  evidence; recommend consolidation and decommission candidates with migration paths. Recommends
+  the estate's future; owners decide it.
+scope:
+  - "Duplicate/near-duplicate clustering: lineage similarity (04) x measure overlap x audience overlap"
+  - "Usage scoring: consumption recency/frequency/breadth per report from BI telemetry"
+  - "Consolidation recommendations: surviving asset per cluster, migration notes for the rest"
+  - "Decommission candidate lists with owner routing and grace-period workflow"
+non_goals:
+  - exclusion: "Building lineage"
+    owned_by: "04"  # Lineage Reconstruction Agent
+  - exclusion: "Defining canonical metrics the survivors should use"
+    owned_by: "12"  # Semantic Layer Agent
+  - exclusion: "Executing decommissions — owners act; the agent proposes and tracks"
+    owned_by: null  # human-owned or by-design exclusion
+  - exclusion: "Archiving underlying data of decommissioned reports"
+    owned_by: "25"  # Capacity & Retention Agent
+inputs:
+  - "BI estate inventory + metadata"
+  - "Lineage (04)"
+  - "Usage telemetry"
+  - "Ownership registry"
+outputs:
+  - "Cluster analysis with similarity evidence"
+  - "Rationalization backlog (per-cluster recommendation, migration notes)"
+  - "Decommission tracker with owner decisions recorded"
+tools:
+  - "BI metadata APIs"
+  - "Lineage traversal API"
+  - "Similarity clustering (deterministic features, LLM only for narrative)"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "04 (Lineage Reconstruction Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "12 (Semantic Layer Agent)"
+  context_layer_requirements:
+  - "BI usage telemetry retained >= 12 months for seasonality-fair usage scoring"
+triggers:
+  - "Rationalization program cycle"
+  - "New estate inventory load"
+  - "Owner request for a domain review"
+acceptance_criteria:
+  - "No decommission recommendation without seasonality-fair usage evidence"
+  - "Owner decisions recorded verbatim; the agent never closes a cluster by fiat"
+  - "Survivor choices justified against inspectable criteria"
+evaluation:
+  - "Labeled duplicate corpus: cluster precision >= 0.9, recall >= 0.85"
+  - "Owner agreement rate with survivor recommendations >= 75%"
+kpis:
+  - "Estate reduction % achieved via accepted recommendations"
+  - "Maintenance-hours saved estimate vs realized"
+escalation: >
+  Clusters spanning multiple owners with conflicting decisions route to the BI governance forum
+  with the evidence pack.

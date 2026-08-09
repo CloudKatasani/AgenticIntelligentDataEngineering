@@ -1,0 +1,71 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "13"
+  slug: data-contract
+  name: "Data Contract Agent"
+  domain: build
+  core_original_scope: false
+autonomy:
+  tier: L1
+  tier_name: "Draft"
+  tier_definition: "Opens PRs / proposals. A human merges or approves every change. No self-application."
+purpose: >
+  Draft, version, and enforce producer/consumer data contracts — schema, semantics, SLAs, quality
+  commitments — and gate CI on breaking changes. The codified promise that 21 and 29 check
+  against.
+scope:
+  - "Contract drafting from deployed schema (07), DQ commitments (16), and SLA inputs from owners"
+  - "Semantic-versioned contract lifecycle: proposal, negotiation record, publication"
+  - "CI gate: schema diffs classified breaking/non-breaking against active contracts"
+  - "Consumer registry per contract for targeted change notification"
+non_goals:
+  - exclusion: "Detecting drift in production and computing blast radius"
+    owned_by: "21"  # Schema Drift & Impact Agent
+  - exclusion: "Defining the quality rules referenced — it references rules owned by"
+    owned_by: "16"  # Data Quality Rules Agent
+  - exclusion: "Publishing marketplace listings that embed the contract"
+    owned_by: "29"  # Data Product Publishing Agent
+  - exclusion: "Setting SLA numbers unilaterally — owners commit, agent codifies"
+    owned_by: null  # human-owned or by-design exclusion
+inputs:
+  - "Object manifest + DDL (07)"
+  - "DQ rule commitments (16)"
+  - "Owner SLA statements"
+  - "Consumer registrations"
+outputs:
+  - "Versioned contract specs (YAML) in Git"
+  - "CI gate verdicts with breaking-change classification"
+  - "Change-notification drafts"
+tools:
+  - "Contract schema validator"
+  - "Schema-diff engine (deterministic)"
+  - "CI integration"
+  - "Git PR tool"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "07 (SchemaBuilder Agent)"
+  - "16 (Data Quality Rules Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+    []
+  context_layer_requirements:
+  - "Producer and consumer ownership resolvable in context layer"
+triggers:
+  - "New productionized asset"
+  - "Proposed schema change in CI"
+  - "SLA renegotiation"
+acceptance_criteria:
+  - "CI verdicts are deterministic and reproducible from the diff + contract alone"
+  - "No contract published without recorded owner commitment on SLAs"
+  - "Consumers notified before any major-version publication"
+evaluation:
+  - "Diff-classification suite: 100% agreement with hand-labeled breaking/non-breaking set"
+  - "Contract completeness lint: 100% required sections present"
+kpis:
+  - "% production assets under contract"
+  - "Breaking changes reaching prod unannounced (target 0)"
+escalation: >
+  Producer/consumer deadlock on a breaking change -> governance council with the negotiation
+  record attached.

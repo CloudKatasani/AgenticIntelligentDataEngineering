@@ -1,0 +1,72 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "16"
+  slug: data-quality-rules
+  name: "Data Quality Rules Agent"
+  domain: quality
+  core_original_scope: true
+autonomy:
+  tier: L1
+  tier_name: "Draft"
+  tier_definition: "Opens PRs / proposals. A human merges or approves every change. No self-application."
+purpose: >
+  Infer, propose, and lifecycle-manage production data-quality rules — validity, completeness,
+  consistency, timeliness thresholds — from profiles, contracts, and glossary intent. Owns the
+  rule book for production data; CI code tests (11) and learned anomaly baselines (17) are out of
+  scope.
+scope:
+  - "Rule inference from profiled invariants and glossary/contract intent, with proposed thresholds and severity"
+  - "Rule lifecycle: propose, calibrate, promote, retire — noisy rules get retired with evidence, not muted"
+  - "Severity-to-action mapping (warn, quarantine-eligible, block) per rule"
+  - "DQ scorecard definitions per asset/domain feeding 29's publishing gate"
+non_goals:
+  - exclusion: "Running CI test suites against code"
+    owned_by: "11"  # Test Generation Agent
+  - exclusion: "Learned statistical baselines / dynamic anomaly detection"
+    owned_by: "17"  # Anomaly & Freshness Agent
+  - exclusion: "Executing quarantine or remediation actions when rules fire"
+    owned_by: "20"  # Remediation / Self-Healing Agent
+  - exclusion: "Reconciliation between source and target during migration"
+    owned_by: "18"  # Reconciliation & Parity Agent
+inputs:
+  - "profile.json (01)"
+  - "Classification (02) for criticality weighting"
+  - "Glossary bindings (05)"
+  - "Contract quality commitments (13, bidirectional: 16 proposes, 13 codifies)"
+outputs:
+  - "Rule definitions (declarative, engine-agnostic) with threshold + severity + rationale"
+  - "Calibration reports (fire-rate vs threshold)"
+  - "Scorecard specs"
+  - "Retirement records"
+tools:
+  - "Context-layer read/write"
+  - "DQ engine adapters (dbt-expectations, GE, native)"
+  - "Fire-rate analytics"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "01 (Source Profiling Agent)"
+  - "02 (Data Classification Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "05 (Glossary & Semantic Alignment Agent)"
+  context_layer_requirements:
+  - "Criticality tiering of assets available"
+triggers:
+  - "Asset productionization"
+  - "Profile drift on ruled asset"
+  - "Noisy-rule review threshold hit"
+acceptance_criteria:
+  - "No rule promoted without calibration evidence and steward approval"
+  - "Every rule carries meaning ('failure implies X'), not just a predicate"
+  - "Retirements are recorded decisions with evidence, never quiet disables"
+evaluation:
+  - "Seeded-defect corpus: promoted rule set catches >= 90% of seeded defect classes"
+  - "Noise: post-calibration false-fire rate < 5%"
+kpis:
+  - "Critical-element rule coverage %"
+  - "Alert precision (fires that were real issues)"
+escalation: >
+  Rules whose failures nobody triages within SLA are escalated to the asset owner as an ownership
+  gap — unowned rules get retired, not accumulated.

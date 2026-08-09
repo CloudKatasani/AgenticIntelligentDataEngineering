@@ -1,0 +1,69 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "18"
+  slug: reconciliation-parity
+  name: "Reconciliation & Parity Agent"
+  domain: quality
+  core_original_scope: false
+autonomy:
+  tier: L2
+  tier_name: "Supervised action"
+  tier_definition: "May execute in non-production autonomously; production actions require explicit human approval."
+purpose: >
+  Prove numeric equivalence between source and target — row counts, checksums, aggregate parity,
+  sampled row-level compares — during migrations, dual-run periods, and on demand from 14. Owns
+  'do the numbers match', nothing about why or what to do.
+scope:
+  - "Parity suite generation from the S2T spec (09): count, checksum, aggregate, and stratified row-sample checks per mapped entity"
+  - "Tolerance policy application: exact vs explained-delta classes (timing windows, declared deltas from 14)"
+  - "Break-list production: which rows/aggregates differ, classified against declared deltas"
+  - "Dual-run scorecards over time for cutover go/no-go evidence"
+non_goals:
+  - exclusion: "Diagnosing root cause of breaks"
+    owned_by: "19"  # Root Cause Analysis Agent
+  - exclusion: "Fixing breaks or re-running loads"
+    owned_by: "20"  # Remediation / Self-Healing Agent
+  - exclusion: "Ongoing production DQ rules after cutover"
+    owned_by: "16"  # Data Quality Rules Agent
+  - exclusion: "Declaring the deltas it tolerates — deltas are declared by"
+    owned_by: "14"  # Legacy Modernization Agent
+inputs:
+  - "S2T spec (09) as the equivalence definition"
+  - "Declared-delta register (14)"
+  - "Read access to both estates"
+  - "Tolerance policy"
+outputs:
+  - "Parity reports per run (pass/fail per check, break list)"
+  - "Dual-run trend scorecards"
+  - "Cutover evidence pack input"
+tools:
+  - "Deterministic comparison engine (counts/checksums/aggregates)"
+  - "Stratified sampler"
+  - "Dual-estate read connectors"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "09 (Data Mapping Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "14 (Legacy Modernization Agent)"
+  context_layer_requirements:
+  - "Both estates readable with aligned as-of snapshot capability"
+triggers:
+  - "Parity run request from 14"
+  - "Scheduled dual-run checks"
+  - "Pre-cutover evidence request"
+acceptance_criteria:
+  - "All comparisons deterministic and reproducible from inputs"
+  - "No break silently tolerated: every one is EXPLAINED(delta-id) or UNEXPLAINED-failing"
+  - "Snapshot alignment recorded per run"
+evaluation:
+  - "Seeded-mismatch corpus: detection 100% at configured granularity"
+  - "Explained-delta mapping: zero misclassification on labeled set"
+kpis:
+  - "Parity run turnaround per subject area"
+  - "Consecutive-clean-run streaks pre-cutover"
+escalation: >
+  Repeated UNEXPLAINED breaks on the same entity across runs escalate to migration lead with the
+  full trend, not just the latest run.

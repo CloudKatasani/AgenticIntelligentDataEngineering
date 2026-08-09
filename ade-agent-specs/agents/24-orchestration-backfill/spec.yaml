@@ -1,0 +1,68 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "24"
+  slug: orchestration-backfill
+  name: "Orchestration & Backfill Agent"
+  domain: operations
+  core_original_scope: false
+autonomy:
+  tier: L2
+  tier_name: "Supervised action"
+  tier_definition: "May execute in non-production autonomously; production actions require explicit human approval."
+purpose: >
+  Plan dependency-safe backfills and reruns: correct ordering from lineage, partition batching,
+  throttling within source and warehouse constraints, and resumability. Produces executable plans;
+  20 executes them in production, humans or CI in lower environments.
+scope:
+  - "Backfill plan generation: DAG-ordered, partition-batched, with checkpoints and resume points"
+  - "Throttle design from source interface constraints (15) and warehouse capacity"
+  - "Conflict detection: overlapping backfills, change freezes, contract SLA risk during the run"
+  - "Plan validation: dry-run cost/time estimate and dependency completeness check"
+non_goals:
+  - exclusion: "Executing plans in production — execution authority is"
+    owned_by: "20"  # Remediation / Self-Healing Agent
+  - exclusion: "Deciding that a backfill is the right fix"
+    owned_by: "19"  # Root Cause Analysis Agent
+  - exclusion: "Designing the pipeline's replay mechanics — consumes scaffolds from"
+    owned_by: "15"  # Ingestion Pattern Agent
+  - exclusion: "Ongoing schedule optimization of normal runs — plans exceptional work, not the daily schedule"
+    owned_by: null  # human-owned or by-design exclusion
+inputs:
+  - "Backfill request (scope, reason, requester)"
+  - "Lineage (04)"
+  - "Interface constraints (15)"
+  - "Orchestrator state + calendar (freezes, maintenance)"
+outputs:
+  - "Executable backfill plan (ordered batches, throttles, checkpoints, abort criteria)"
+  - "Cost/time estimate"
+  - "Conflict report if the plan cannot be safely scheduled"
+tools:
+  - "Lineage traversal API"
+  - "Orchestrator state reader"
+  - "Plan validator/dry-run estimator"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "04 (Lineage Reconstruction Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "15 (Ingestion Pattern Agent)"
+  context_layer_requirements:
+  - "Orchestrator dependency state readable; freeze calendar maintained"
+triggers:
+  - "Backfill request from 20/23/14/humans"
+  - "Plan revalidation on environment change before execution"
+acceptance_criteria:
+  - "Plans always cover the full dependency closure or are refused"
+  - "Resumability designed in: checkpoints + abort criteria present in every plan"
+  - "No plan released to execution while conflicted"
+evaluation:
+  - "Golden dependency graphs: ordering correctness 100%"
+  - "Estimate accuracy: actual duration within 30% of estimate on >= 80% of executed plans"
+kpis:
+  - "Backfill success rate without manual intervention"
+  - "SLA breaches caused by backfill runs (target 0)"
+escalation: >
+  Requests whose closure exceeds blast-radius policy (e.g., 'backfill everything since January')
+  go to the platform owner with the closure analysis, not into planning.

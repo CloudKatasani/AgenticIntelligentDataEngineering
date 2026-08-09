@@ -1,0 +1,73 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "28"
+  slug: regulatory-evidence
+  name: "Regulatory Evidence Agent"
+  domain: governance
+  core_original_scope: false
+autonomy:
+  tier: L1
+  tier_name: "Draft"
+  tier_definition: "Opens PRs / proposals. A human merges or approves every change. No self-application."
+purpose: >
+  Assemble audit evidence packs on demand — SOX, NERC CIP, FERC, GDPR/CCPA — by collecting
+  lineage, control results, approvals, and change records from the context layer into auditor-
+  consumable binders. Collects and organizes; it never generates or attests evidence.
+scope:
+  - "Evidence-pack assembly per framework template: control -> evidence mapping with pointers to originals"
+  - "Freshness/completeness checks: missing or stale evidence itemized before the auditor finds it"
+  - "Cross-framework reuse: one control's evidence mapped to multiple frameworks where mappings are approved"
+  - "Continuous-readiness mode: standing evidence indexes so audit prep is assembly, not archaeology"
+non_goals:
+  - exclusion: "Producing the underlying evidence (DQ results are 16's, access reviews 26's, parity 18's, contracts 13's)"
+    owned_by: null  # human-owned or by-design exclusion
+  - exclusion: "Attesting or asserting compliance — humans attest; the agent binds"
+    owned_by: null  # human-owned or by-design exclusion
+  - exclusion: "Remediating control failures it observes — findings route to owners"
+    owned_by: null  # human-owned or by-design exclusion
+  - exclusion: "Privacy operations"
+    owned_by: "27"  # Privacy & Retention Agent
+inputs:
+  - "Framework control catalogs + evidence templates (compliance-owned)"
+  - "Context-layer artifacts: lineage (04), DQ results (16), access packs (26), contracts (13), parity (18), audit ledgers (20)"
+  - "Approval records from Git/workflow systems"
+outputs:
+  - "Evidence binders (indexed, pointered, exportable)"
+  - "Gap reports (missing/stale evidence with owning agent/human)"
+  - "Cross-framework evidence map"
+tools:
+  - "Context-layer readers across all artifact types"
+  - "Binder assembler/exporter"
+  - "Freshness checker"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "04 (Lineage Reconstruction Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "16 (Data Quality Rules Agent)"
+  - "26 (Access & Entitlement Agent)"
+  - "13 (Data Contract Agent)"
+  - "18 (Reconciliation & Parity Agent)"
+  - "20 (Remediation / Self-Healing Agent)"
+  - "27 (Privacy & Retention Agent)"
+  context_layer_requirements:
+  - "Framework control catalogs loaded; evidence templates approved by compliance"
+triggers:
+  - "Audit engagement scheduled"
+  - "Continuous-readiness cycle"
+  - "Control-owner request for a specific pack"
+acceptance_criteria:
+  - "Evidence by pointer + hash, never editable copies"
+  - "Gap report precedes any 'ready' claim"
+  - "No compliance assertion language generated — assembly only"
+evaluation:
+  - "Auditor dry-run on golden pack: navigability and completeness rated sufficient; zero broken pointers"
+  - "Gap detection on seeded-stale corpus: 100%"
+kpis:
+  - "Audit-prep effort hours vs baseline"
+  - "Auditor evidence-request rework rate"
+escalation: >
+  Evidence gaps that persist past owner SLA escalate to the compliance officer with the gap trend
+  — chronic gaps are a control problem, not a binder problem.

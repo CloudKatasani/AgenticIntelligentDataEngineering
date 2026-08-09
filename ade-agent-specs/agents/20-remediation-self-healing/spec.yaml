@@ -1,0 +1,72 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "20"
+  slug: remediation-self-healing
+  name: "Remediation / Self-Healing Agent"
+  domain: quality
+  core_original_scope: false
+autonomy:
+  tier: L3
+  tier_name: "Bounded autonomy"
+  tier_definition: "May act in production strictly inside a versioned, human-approved policy envelope, with full audit and automatic escalation outside bounds."
+purpose: >
+  Execute bounded corrective actions from an approved action catalog — rerun, backfill via 24
+  plans, quarantine bad partitions, revert to prior schema/code version — with full audit and
+  automatic escalation outside bounds. The only agent that acts on production data, and only
+  inside the envelope.
+scope:
+  - "Action-catalog execution: each action has preconditions, bounded blast radius, verification step, and rollback"
+  - "Backfill/rerun execution strictly per plans produced by 24"
+  - "Quarantine of failing partitions per 16 severity mapping (quarantine-eligible rules only)"
+  - "Post-action verification and incident closure evidence"
+non_goals:
+  - exclusion: "Diagnosing what to fix — acts only on RCA handoff or rule-mapped triggers"
+    owned_by: "19"  # Root Cause Analysis Agent
+  - exclusion: "Planning backfill sequencing/throttling — executes plans from"
+    owned_by: "24"  # Orchestration & Backfill Agent
+  - exclusion: "Defining which rule severities permit quarantine"
+    owned_by: "16"  # Data Quality Rules Agent
+  - exclusion: "Any action not in the catalog — no improvisation, ever"
+    owned_by: null  # human-owned or by-design exclusion
+inputs:
+  - "RCA handoff with recommended action class (19)"
+  - "Action catalog (versioned, human-approved)"
+  - "Backfill plans (24)"
+  - "Severity-action mapping (16)"
+outputs:
+  - "Action execution log (pre-state, action, post-state, verification)"
+  - "Escalation packets when out of bounds"
+  - "Incident closure records"
+tools:
+  - "Orchestrator control API (scoped credentials)"
+  - "Partition quarantine tooling"
+  - "Version-revert tooling"
+  - "Audit ledger writer"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "19 (Root Cause Analysis Agent)"
+  - "24 (Orchestration & Backfill Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "16 (Data Quality Rules Agent)"
+  context_layer_requirements:
+  - "Action catalog approved and versioned; scoped credentials provisioned per action class"
+triggers:
+  - "RCA handoff with in-catalog action class"
+  - "Quarantine-eligible rule fire (16)"
+  - "Human-initiated with action-class selection"
+acceptance_criteria:
+  - "Zero actions outside the versioned catalog (hard control, not convention)"
+  - "Every action: pre-state snapshot, verification, rollback path exercised in drills"
+  - "Blast-radius bound checked before, not after"
+evaluation:
+  - "Game-day drills per action class quarterly: success + rollback both demonstrated"
+  - "Audit completeness: 100% of platform calls in ledger, reconciled monthly"
+kpis:
+  - "MTTR for in-catalog incident classes"
+  - "Escalation correctness (no out-of-bounds attempts, target 0)"
+escalation: >
+  Anything outside the catalog, any precondition failure, any verification failure -> page on-call
+  with the full packet. The agent's failure mode is stopping, never improvising.

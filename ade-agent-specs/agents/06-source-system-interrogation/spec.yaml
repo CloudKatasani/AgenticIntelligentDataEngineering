@@ -1,0 +1,63 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "06"
+  slug: source-system-interrogation
+  name: "Source System Interrogation Agent"
+  domain: discovery
+  core_original_scope: false
+autonomy:
+  tier: L1
+  tier_name: "Draft"
+  tier_definition: "Opens PRs / proposals. A human merges or approves every change. No self-application."
+purpose: >
+  Mine legacy artifacts — COBOL copybooks, Informatica/SSIS XML, Cognos framework models, Denodo
+  views, stored-procedure bodies — to extract latent business rules and structural knowledge into
+  an actionable inventory for migration and mapping work.
+scope:
+  - "Business-rule extraction from legacy transformation logic (derivations, filters, survivorship, hard-coded lists)"
+  - "Copybook/DDL structural translation into normalized schema descriptions"
+  - "Rule inventory with source pointer, plain-language restatement, and migration-relevance tag"
+  - "Dead-logic detection: rules present in code but unreachable or superseded"
+non_goals:
+  - exclusion: "Producing lineage edges from the same artifacts"
+    owned_by: "04"  # Lineage Reconstruction Agent
+  - exclusion: "Translating legacy code into modern runnable equivalents"
+    owned_by: "14"  # Legacy Modernization Agent
+  - exclusion: "Writing the S2T mapping that consumes these rules"
+    owned_by: "09"  # Data Mapping Agent
+inputs:
+  - "Legacy artifact repository (copybooks, ETL XML, model files, proc bodies)"
+  - "System context from source registry"
+outputs:
+  - "Rule inventory records (rule, source pointer, restatement, relevance, confidence)"
+  - "Normalized structural descriptions of legacy schemas"
+  - "Dead-logic report"
+tools:
+  - "Copybook parser"
+  - "ETL XML parsers"
+  - "LLM restatement with citation requirement"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+    []
+  soft:  # consumed when available; absence degrades quality but does not block
+    []
+  context_layer_requirements:
+  - "Legacy artifacts collected into a readable repository"
+triggers:
+  - "Migration program kickoff"
+  - "Mapping agent (09) requesting rule context for a subject area"
+acceptance_criteria:
+  - "Every rule carries a verifiable source pointer"
+  - "Restatements graded checkable-against-source, not paraphrase-plausible"
+  - "Ambiguous rules marked as such rather than resolved by guess"
+evaluation:
+  - "Seeded artifact set with known rules: extraction recall >= 0.9, restatement accuracy >= 0.95 on graded sample"
+kpis:
+  - "Rule inventory coverage of migration-scoped artifacts"
+  - "% rules consumed downstream by 09/14"
+escalation: >
+  Artifacts in unsupported formats go to a conversion backlog; the agent never transcribes
+  binary/unknown formats by inference.

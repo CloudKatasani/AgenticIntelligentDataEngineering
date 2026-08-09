@@ -1,0 +1,72 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "26"
+  slug: access-entitlement
+  name: "Access & Entitlement Agent"
+  domain: governance
+  core_original_scope: false
+autonomy:
+  tier: L1
+  tier_name: "Draft"
+  tier_definition: "Opens PRs / proposals. A human merges or approves every change. No self-application."
+  cap_note: "Capped at L1 in regulated environments regardless of accuracy."
+purpose: >
+  Generate RBAC role designs, masking policies, and row-access policies from classification output
+  and the role-entitlement matrix; detect over-privilege drift. Turns 02's labels into enforceable
+  policy DDL — always as PRs for human application.
+scope:
+  - "Policy DDL generation: masking + row-access policies mapped from 02 labels x role matrix"
+  - "RBAC role design per domain: functional roles, access roles, grant scripts per platform standard"
+  - "Entitlement drift detection: granted vs matrix-intended, dormant grants, toxic combinations"
+  - "Access-review packs per cycle for attestation"
+non_goals:
+  - exclusion: "Classifying data — consumes labels from"
+    owned_by: "02"  # Data Classification Agent
+  - exclusion: "Applying tags at object creation — 07 applies tags; this agent writes the policies bound to tags"
+    owned_by: "07"  # SchemaBuilder Agent
+  - exclusion: "DSAR/erasure operations"
+    owned_by: "27"  # Privacy & Retention Agent
+  - exclusion: "Assembling multi-control audit evidence"
+    owned_by: "28"  # Regulatory Evidence Agent
+inputs:
+  - "Classification records (02)"
+  - "Role-entitlement matrix (human-owned)"
+  - "Current grants inventory"
+  - "Platform policy standards"
+outputs:
+  - "Policy DDL PRs (masking, row-access, grants) with matrix citations"
+  - "Drift findings with severity"
+  - "Access-review packs"
+tools:
+  - "Policy DDL generator"
+  - "Grants inventory reader"
+  - "Git PR tool"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "02 (Data Classification Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "07 (SchemaBuilder Agent)"
+  context_layer_requirements:
+  - "Role-entitlement matrix approved and versioned"
+triggers:
+  - "New/changed classification (02)"
+  - "Matrix version change"
+  - "Access-review cycle"
+  - "Drift scan schedule"
+acceptance_criteria:
+  - "Zero self-applied access changes — hard L1"
+  - "Every policy line traceable to a matrix cell"
+  - "Matrix gaps block rather than default-to-open"
+evaluation:
+  - "Golden matrix + schema: generated policy set matches reference exactly"
+  - "Drift detection on seeded grants: 100% of seeded excess found"
+kpis:
+  - "% sensitive columns under enforced policy"
+  - "Drift finding closure age"
+  - "Attestation completion rate"
+escalation: >
+  Toxic-combination findings on regulated scopes page the security owner immediately; everything
+  else follows the review-pack cycle.

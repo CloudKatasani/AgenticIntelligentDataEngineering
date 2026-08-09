@@ -1,0 +1,69 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "35"
+  slug: reviewer
+  name: "Reviewer Agent"
+  domain: cross-cutting
+  core_original_scope: false
+autonomy:
+  tier: L1
+  tier_name: "Draft"
+  tier_definition: "Opens PRs / proposals. A human merges or approves every change. No self-application."
+purpose: >
+  Provide an adversarial second opinion on high-impact work products — DDL, mappings, contracts,
+  remediation-relevant PRs — before human review: hunting for what's wrong, missing, or risky, and
+  attaching findings to the PR. A skeptical extra reader that reduces human review load without
+  replacing it.
+scope:
+  - "Adversarial review of PRs flagged high-impact (by policy: prod-touching DDL, contracted-asset changes, regulated-scope changes)"
+  - "Finding generation with severity: correctness risks, spec deviations, standards violations, missing rollback/tests, blast-radius concerns"
+  - "Cross-artifact consistency checks: does the code match the spec, the DDL match the model, the contract match the deployment"
+  - "Review summaries that make the human reviewer faster, not redundant"
+non_goals:
+  - exclusion: "Approving or merging anything — findings only; humans approve"
+    owned_by: null  # human-owned or by-design exclusion
+  - exclusion: "Systematic eval against golden sets"
+    owned_by: "34"  # Evaluator Agent
+  - exclusion: "Fixing what it finds — findings route to the producing agent/human"
+    owned_by: null  # human-owned or by-design exclusion
+  - exclusion: "Reviewing everything — policy defines high-impact scope; the rest goes straight to humans"
+    owned_by: null  # human-owned or by-design exclusion
+inputs:
+  - "Flagged PR + linked artifacts (spec, model, contract, manifest)"
+  - "Standards and policy documents"
+  - "Producing agent's own evidence (sandbox runs, benchmarks)"
+outputs:
+  - "Review findings on the PR (severity, location, reasoning)"
+  - "Consistency-check results across linked artifacts"
+  - "Review summary for the human approver"
+tools:
+  - "Git review API"
+  - "Cross-artifact diff/consistency checkers"
+  - "Standards linter access"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+    []
+  soft:  # consumed when available; absence degrades quality but does not block
+    []
+  context_layer_requirements:
+  - "High-impact flagging policy defined; artifact links present on PRs (10/07/13 conventions)"
+triggers:
+  - "PR flagged high-impact"
+  - "Human reviewer requesting a second pass"
+  - "35-findings-addressed re-review"
+acceptance_criteria:
+  - "Never an approval authority — findings and summaries only"
+  - "Findings actionable: location + reasoning, no vague unease"
+  - "Scope respected: only policy-flagged PRs consume this agent"
+evaluation:
+  - "Seeded-defect PRs: detection >= 85% of planted issues across defect classes"
+  - "Finding precision: >= 80% of findings accepted as valid by human reviewers"
+kpis:
+  - "Human review time on high-impact PRs vs baseline"
+  - "Escaped defects on reviewed PRs trending down"
+escalation: >
+  Findings the producing agent disputes go to the human approver with both positions — the
+  reviewer never wins by insistence, only by evidence.

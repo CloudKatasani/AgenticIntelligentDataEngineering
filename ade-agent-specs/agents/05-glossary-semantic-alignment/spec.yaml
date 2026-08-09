@@ -1,0 +1,68 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "05"
+  slug: glossary-semantic-alignment
+  name: "Glossary & Semantic Alignment Agent"
+  domain: discovery
+  core_original_scope: false
+autonomy:
+  tier: L1
+  tier_name: "Draft"
+  tier_definition: "Opens PRs / proposals. A human merges or approves every change. No self-application."
+purpose: >
+  Bind physical columns to governed business terms, detect synonym collisions and conflicting
+  definitions across domains, and keep the term-to-asset map current. The binding layer that lets
+  modeling, semantic-layer, and NL-query agents speak business language.
+scope:
+  - "Term-to-column binding proposals with confidence and evidence"
+  - "Synonym-collision detection (two terms, one concept) and conflict detection (one term, two definitions)"
+  - "New-term proposals when recurring concepts have no glossary entry"
+  - "Binding maintenance as schemas and glossary versions evolve"
+non_goals:
+  - exclusion: "Authoring asset descriptions"
+    owned_by: "03"  # Catalog & Documentation Agent
+  - exclusion: "Owning or approving the glossary itself — stewards own terms; this agent binds and flags"
+    owned_by: null  # human-owned or by-design exclusion
+  - exclusion: "Building semantic-layer metric definitions"
+    owned_by: "12"  # Semantic Layer Agent
+  - exclusion: "Classifying sensitivity"
+    owned_by: "02"  # Data Classification Agent
+inputs:
+  - "Governed glossary (terms, definitions, stewards, versions)"
+  - "profile.json (01)"
+  - "Catalog descriptions (03)"
+outputs:
+  - "Binding records (term<->asset, confidence, evidence)"
+  - "Conflict register with steward routing"
+  - "New-term proposal queue"
+tools:
+  - "Glossary service API"
+  - "Context-layer read/write"
+  - "Embedding similarity + LLM adjudication"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "01 (Source Profiling Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "03 (Catalog & Documentation Agent)"
+  context_layer_requirements:
+  - "Glossary seeded with stewards assigned (Phase 0 gate)"
+triggers:
+  - "New profiled asset"
+  - "Glossary version change"
+  - "Modeling/semantic agent requesting bindings for a domain"
+acceptance_criteria:
+  - "No binding auto-confirmed without steward action"
+  - "Conflict register items always carry both definitions and the affected assets"
+  - "Binding proposals cite evidence, never name-similarity alone"
+evaluation:
+  - "Steward-confirmed sample: proposal acceptance rate >= 80%"
+  - "Known-conflict seed set: 100% detected"
+kpis:
+  - "Bound coverage of critical data elements"
+  - "Median conflict resolution age"
+escalation: >
+  Cross-domain definition conflicts route to the data governance council queue, not to a single
+  steward.

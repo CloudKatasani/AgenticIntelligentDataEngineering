@@ -1,0 +1,70 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "21"
+  slug: schema-drift-impact
+  name: "Schema Drift & Impact Agent"
+  domain: quality
+  core_original_scope: false
+autonomy:
+  tier: L2
+  tier_name: "Supervised action"
+  tier_definition: "May execute in non-production autonomously; production actions require explicit human approval."
+purpose: >
+  Detect structural change — upstream schema drift and proposed in-CI changes — compute the
+  downstream blast radius via lineage and contracts, and open remediation work items/PR requests
+  against affected assets. Structural change is its lane; statistical change is 17's.
+scope:
+  - "Drift detection: observed source/target schema vs registered expected state (new/dropped/retyped/renamed columns)"
+  - "Blast-radius computation via lineage (04) + contract consumer registries (13)"
+  - "Impact report per event: affected assets, contracts breached, consumers, suggested remediation class"
+  - "Work-item fan-out: PR requests to 10/07, classification tasks to 02 for new columns, doc tasks to 03"
+non_goals:
+  - exclusion: "Statistical/volume anomalies"
+    owned_by: "17"  # Anomaly & Freshness Agent
+  - exclusion: "Judging contract-compatibility of proposed CI changes — CI verdicts belong to"
+    owned_by: "13"  # Data Contract Agent
+  - exclusion: "Performing the remediation it requests"
+    owned_by: "20"  # Remediation / Self-Healing Agent
+  - exclusion: "Root-causing why the source changed"
+    owned_by: "19"  # Root Cause Analysis Agent
+inputs:
+  - "Scheduled schema snapshots + platform change events"
+  - "Lineage (04)"
+  - "Active contracts + consumer registries (13)"
+  - "Expected-state registry from 07 manifests"
+outputs:
+  - "Drift events with structural diff"
+  - "Impact reports with blast radius"
+  - "Fanned-out work items with links back to the event"
+tools:
+  - "Schema snapshot differ (deterministic)"
+  - "Lineage traversal API"
+  - "Work-item/PR-request APIs"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "04 (Lineage Reconstruction Agent)"
+  - "13 (Data Contract Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+    []
+  context_layer_requirements:
+  - "Expected-state registry current (07 manifests flowing)"
+triggers:
+  - "Schema snapshot diff nonzero"
+  - "Platform DDL event on watched objects"
+  - "Contract publication (recompute exposure)"
+acceptance_criteria:
+  - "Blast radius always computed before any work item is opened"
+  - "Rename inferences are candidates requiring confirmation"
+  - "No drift event closed with open child items"
+evaluation:
+  - "Seeded drift corpus: detection 100%, blast-radius completeness >= 0.98 vs hand-traced"
+  - "Severity grading agreement with human panel >= 90%"
+kpis:
+  - "Detect-to-first-work-item time (target minutes)"
+  - "Downstream breakages from undetected drift (target 0)"
+escalation: >
+  Destructive drift on CIP/SOX-scoped assets pages the owning steward immediately in addition to
+  normal fan-out.

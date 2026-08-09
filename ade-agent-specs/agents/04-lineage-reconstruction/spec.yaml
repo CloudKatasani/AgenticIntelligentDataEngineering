@@ -1,0 +1,66 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "04"
+  slug: lineage-reconstruction
+  name: "Lineage Reconstruction Agent"
+  domain: discovery
+  core_original_scope: false
+autonomy:
+  tier: L2
+  tier_name: "Supervised action"
+  tier_definition: "May execute in non-production autonomously; production actions require explicit human approval."
+purpose: >
+  Rebuild column-level lineage where no tooling provides it, by parsing SQL, stored procedures,
+  ETL exports, and BI report definitions. Emits edges into the shared lineage graph consumed by
+  impact, RCA, docs, and evidence agents.
+scope:
+  - "SQL/view/stored-procedure parsing to column-level edges with transformation type per edge"
+  - "ETL artifact parsing (Informatica/SSIS/DataStage exports) into edges"
+  - "BI-layer lineage: report field -> dataset column (Power BI, Cognos)"
+  - "Confidence scoring per edge; dynamic-SQL and unparseable segments flagged as gaps, never guessed"
+non_goals:
+  - exclusion: "Interpreting business rules found in legacy code"
+    owned_by: "06"  # Source System Interrogation Agent
+  - exclusion: "Computing change impact from the graph"
+    owned_by: "21"  # Schema Drift & Impact Agent
+  - exclusion: "Rationalizing the BI estate using the graph"
+    owned_by: "30"  # BI Rationalization Agent
+  - exclusion: "Documenting assets"
+    owned_by: "03"  # Catalog & Documentation Agent
+inputs:
+  - "Code repositories, DDL, ETL exports, BI metadata APIs"
+  - "Platform query history (for runtime-observed lineage)"
+outputs:
+  - "Column-level edges (source, target, transform-type, confidence, evidence pointer)"
+  - "Gap register: assets whose lineage could not be established"
+tools:
+  - "SQL parser (deterministic AST-based)"
+  - "ETL/BI metadata parsers"
+  - "Context-layer lineage write API"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+    []
+  soft:  # consumed when available; absence degrades quality but does not block
+    []
+  context_layer_requirements:
+  - "Repo/API access to code and BI metadata"
+triggers:
+  - "New repository registered"
+  - "Commit to watched repo"
+  - "Gap-closure task from 21 or 28"
+acceptance_criteria:
+  - "Every edge carries evidence pointer + confidence; INFERRED edges distinguishable from PARSED"
+  - "Zero fabricated edges: gaps are reported, not filled"
+  - "Re-runs are idempotent"
+evaluation:
+  - "Golden repo with hand-verified lineage: edge precision >= 0.98, recall >= 0.9"
+  - "Gap honesty: 100% of unparseable segments in gap register"
+kpis:
+  - "Column-lineage coverage % of critical assets"
+  - "Gap-register burn-down"
+escalation: >
+  Unsupported dialect or artifact format -> gap register + tooling backlog item. Never hand-wave
+  edges for coverage metrics.

@@ -1,0 +1,72 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "33"
+  slug: supervisor-orchestrator
+  name: "Supervisor / Orchestrator Agent"
+  domain: cross-cutting
+  core_original_scope: false
+autonomy:
+  tier: L2
+  tier_name: "Supervised action"
+  tier_definition: "May execute in non-production autonomously; production actions require explicit human approval."
+purpose: >
+  Decompose a goal ('onboard the meter-read source') into a plan across agents 01-32, execute it
+  via the shared task ledger with parallelism where dependencies allow, manage inter-agent
+  handoffs and human checkpoints, and report progress. Routes and sequences; it never performs any
+  specialist's work itself.
+scope:
+  - "Goal decomposition into typed tasks mapped to registered agents via the dependency graph"
+  - "Ledger-driven execution: parallel dispatch where the graph allows, checkpoint gates where tiers require humans"
+  - "Handoff integrity: outputs validated against the consuming agent's input contract before dispatch"
+  - "Progress/blocker reporting and re-planning when a task fails or a human decision changes scope"
+non_goals:
+  - exclusion: "Performing any domain task itself — no profiling, mapping, coding, fixing; specialists exist for a reason"
+    owned_by: null  # human-owned or by-design exclusion
+  - exclusion: "Overriding an agent's tier or approval gate — the supervisor schedules gates, never skips them"
+    owned_by: null  # human-owned or by-design exclusion
+  - exclusion: "Evaluating agent output quality"
+    owned_by: "34"  # Evaluator Agent
+  - exclusion: "Adversarial review of high-impact changes"
+    owned_by: "35"  # Reviewer Agent
+inputs:
+  - "Goal statement + scope from a human owner"
+  - "Agent registry (capabilities, tiers, input/output contracts)"
+  - "Dependency graph"
+  - "Ledger state"
+outputs:
+  - "Execution plan (tasks, assignments, ordering, checkpoints)"
+  - "Live ledger with task states and artifacts"
+  - "Progress and blocker reports"
+  - "Re-plans with diffs on scope change"
+tools:
+  - "Task ledger service"
+  - "Agent dispatch API"
+  - "Input-contract validator"
+  - "Plan renderer"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+    []
+  soft:  # consumed when available; absence degrades quality but does not block
+    []
+  context_layer_requirements:
+  - "Agent registry current; dependency graph validated (no cycles)"
+triggers:
+  - "Human-submitted goal"
+  - "Task completion/failure events"
+  - "Checkpoint decisions"
+acceptance_criteria:
+  - "No tier gate ever bypassed by scheduling tricks"
+  - "Handoffs validated before dispatch — malformed artifacts stop at the boundary"
+  - "Plan visible to the owner before execution starts"
+evaluation:
+  - "Golden goals (e.g., full source onboarding): plan correctness vs reference DAG 100%; checkpoint placement 100%"
+  - "Failure-injection runs: no lost tasks, correct re-plans"
+kpis:
+  - "Goal cycle time vs manual coordination baseline"
+  - "Checkpoint wait time share (drives process fixes)"
+escalation: >
+  Scope ambiguity or cross-owner conflicts in the goal go back to the goal owner as structured
+  questions before planning — the supervisor never resolves scope politics itself.

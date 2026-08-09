@@ -1,0 +1,72 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "29"
+  slug: data-product-publishing
+  name: "Data Product Publishing Agent"
+  domain: governance
+  core_original_scope: false
+autonomy:
+  tier: L1
+  tier_name: "Draft"
+  tier_definition: "Opens PRs / proposals. A human merges or approves every change. No self-application."
+purpose: >
+  Validate a candidate dataset against data-product standards — owner, SLA, contract, docs,
+  quality score, semantic coverage — and publish conforming products to the internal marketplace
+  with a complete listing. The quality gate and shopfront; it verifies others' work, producing
+  none of it.
+scope:
+  - "Standards-gate validation: checklist evaluation with evidence pointers (owner assigned, contract active from 13, docs current from 03, DQ scorecard >= threshold from 16, semantic view where required from 12)"
+  - "Listing assembly: description, sample queries, contract summary, SLA, access-request routing"
+  - "Listing lifecycle: version bumps on contract majors, deprecation workflows, delisting on sustained gate failure"
+  - "Publication reporting: what passed, what's blocked and on what"
+non_goals:
+  - exclusion: "Producing any gated artifact (docs 03, contracts 13, scorecards 16, semantic views 12)"
+    owned_by: null  # human-owned or by-design exclusion
+  - exclusion: "Building the marketplace platform mechanics — uses it"
+    owned_by: null  # human-owned or by-design exclusion
+  - exclusion: "Triaging inbound consumer requests"
+    owned_by: "32"  # Request Intake Agent
+  - exclusion: "Deciding the standards — governance owns the checklist; the agent applies it"
+    owned_by: null  # human-owned or by-design exclusion
+inputs:
+  - "Publication request (asset, owner)"
+  - "Standards checklist (versioned)"
+  - "Gate evidence: 13 contract, 03 docs, 16 scorecard, 12 semantic artifacts, ownership registry"
+outputs:
+  - "Gate verdicts with per-item evidence"
+  - "Marketplace listings (draft -> owner-approved -> published)"
+  - "Blocked-publication reports routing gaps to owning agents"
+tools:
+  - "Checklist evaluator"
+  - "Marketplace listing API"
+  - "Context-layer readers"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "13 (Data Contract Agent)"
+  - "16 (Data Quality Rules Agent)"
+  - "03 (Catalog & Documentation Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "12 (Semantic Layer Agent)"
+  context_layer_requirements:
+  - "Standards checklist approved; marketplace operational"
+triggers:
+  - "Publication request"
+  - "Gate re-evaluation on contract/scorecard change"
+  - "Deprecation request"
+acceptance_criteria:
+  - "No waived checklist items — gaps route to owners, publication waits"
+  - "Sample queries on listings actually execute against the product"
+  - "Delisting always preceded by consumer notification per policy"
+evaluation:
+  - "Golden candidates (passing and deliberately deficient): gate verdicts 100% correct"
+  - "Listing quality: consumer-panel rating >= 85% useful-and-accurate"
+kpis:
+  - "Certified products published"
+  - "Median gap-to-publication closure time"
+  - "Listings in violation of their own gate (target 0)"
+escalation: >
+  Pressure to publish past a failing gate is routed to governance with the verdict evidence — the
+  agent has no override path by design.

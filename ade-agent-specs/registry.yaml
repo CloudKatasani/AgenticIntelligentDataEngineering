@@ -1,0 +1,354 @@
+# ADE Agent Registry — generated
+apiVersion: ade/v1
+kind: AgentRegistry
+agents:
+  - id: "01"
+    slug: source-profiling
+    name: "Source Profiling Agent"
+    domain: discovery
+    tier: L2
+    core_original_scope: false
+    spec: agents/01-source-profiling/spec.yaml
+    skill: agents/01-source-profiling/SKILL.md
+    hard_deps: []
+    soft_deps: []
+  - id: "02"
+    slug: data-classification
+    name: "Data Classification Agent"
+    domain: discovery
+    tier: L1
+    core_original_scope: true
+    spec: agents/02-data-classification/spec.yaml
+    skill: agents/02-data-classification/SKILL.md
+    hard_deps: ['01']
+    soft_deps: ['05']
+  - id: "03"
+    slug: catalog-documentation
+    name: "Catalog & Documentation Agent"
+    domain: discovery
+    tier: L2
+    core_original_scope: false
+    spec: agents/03-catalog-documentation/spec.yaml
+    skill: agents/03-catalog-documentation/SKILL.md
+    hard_deps: ['01']
+    soft_deps: ['04', '05']
+  - id: "04"
+    slug: lineage-reconstruction
+    name: "Lineage Reconstruction Agent"
+    domain: discovery
+    tier: L2
+    core_original_scope: false
+    spec: agents/04-lineage-reconstruction/spec.yaml
+    skill: agents/04-lineage-reconstruction/SKILL.md
+    hard_deps: []
+    soft_deps: []
+  - id: "05"
+    slug: glossary-semantic-alignment
+    name: "Glossary & Semantic Alignment Agent"
+    domain: discovery
+    tier: L1
+    core_original_scope: false
+    spec: agents/05-glossary-semantic-alignment/spec.yaml
+    skill: agents/05-glossary-semantic-alignment/SKILL.md
+    hard_deps: ['01']
+    soft_deps: ['03']
+  - id: "06"
+    slug: source-system-interrogation
+    name: "Source System Interrogation Agent"
+    domain: discovery
+    tier: L1
+    core_original_scope: false
+    spec: agents/06-source-system-interrogation/spec.yaml
+    skill: agents/06-source-system-interrogation/SKILL.md
+    hard_deps: []
+    soft_deps: []
+  - id: "07"
+    slug: schema-builder
+    name: "SchemaBuilder Agent"
+    domain: build
+    tier: L1
+    core_original_scope: true
+    spec: agents/07-schema-builder/spec.yaml
+    skill: agents/07-schema-builder/SKILL.md
+    hard_deps: ['08', '02']
+    soft_deps: []
+  - id: "08"
+    slug: data-modeling
+    name: "Data Modeling Agent"
+    domain: build
+    tier: L0
+    core_original_scope: true
+    spec: agents/08-data-modeling/spec.yaml
+    skill: agents/08-data-modeling/SKILL.md
+    hard_deps: ['01', '05']
+    soft_deps: ['06']
+  - id: "09"
+    slug: data-mapping
+    name: "Data Mapping Agent"
+    domain: build
+    tier: L1
+    core_original_scope: true
+    spec: agents/09-data-mapping/spec.yaml
+    skill: agents/09-data-mapping/SKILL.md
+    hard_deps: ['08', '01']
+    soft_deps: ['06', '04']
+  - id: "10"
+    slug: coding
+    name: "Coding Agent"
+    domain: build
+    tier: L1
+    core_original_scope: true
+    spec: agents/10-coding/spec.yaml
+    skill: agents/10-coding/SKILL.md
+    hard_deps: ['09', '07']
+    soft_deps: ['15']
+  - id: "11"
+    slug: test-generation
+    name: "Test Generation Agent"
+    domain: build
+    tier: L1
+    core_original_scope: false
+    spec: agents/11-test-generation/spec.yaml
+    skill: agents/11-test-generation/SKILL.md
+    hard_deps: ['09', '01']
+    soft_deps: ['08']
+  - id: "12"
+    slug: semantic-layer
+    name: "Semantic Layer Agent"
+    domain: build
+    tier: L1
+    core_original_scope: false
+    spec: agents/12-semantic-layer/spec.yaml
+    skill: agents/12-semantic-layer/SKILL.md
+    hard_deps: ['08', '05']
+    soft_deps: ['07']
+  - id: "13"
+    slug: data-contract
+    name: "Data Contract Agent"
+    domain: build
+    tier: L1
+    core_original_scope: false
+    spec: agents/13-data-contract/spec.yaml
+    skill: agents/13-data-contract/SKILL.md
+    hard_deps: ['07', '16']
+    soft_deps: []
+  - id: "14"
+    slug: legacy-modernization
+    name: "Legacy Modernization Agent"
+    domain: build
+    tier: L1
+    core_original_scope: false
+    spec: agents/14-legacy-modernization/spec.yaml
+    skill: agents/14-legacy-modernization/SKILL.md
+    hard_deps: ['06']
+    soft_deps: ['09']
+  - id: "15"
+    slug: ingestion-pattern
+    name: "Ingestion Pattern Agent"
+    domain: build
+    tier: L1
+    core_original_scope: false
+    spec: agents/15-ingestion-pattern/spec.yaml
+    skill: agents/15-ingestion-pattern/SKILL.md
+    hard_deps: ['01']
+    soft_deps: []
+  - id: "16"
+    slug: data-quality-rules
+    name: "Data Quality Rules Agent"
+    domain: quality
+    tier: L1
+    core_original_scope: true
+    spec: agents/16-data-quality-rules/spec.yaml
+    skill: agents/16-data-quality-rules/SKILL.md
+    hard_deps: ['01', '02']
+    soft_deps: ['05']
+  - id: "17"
+    slug: anomaly-freshness
+    name: "Anomaly & Freshness Agent"
+    domain: quality
+    tier: L4
+    core_original_scope: false
+    spec: agents/17-anomaly-freshness/spec.yaml
+    skill: agents/17-anomaly-freshness/SKILL.md
+    hard_deps: []
+    soft_deps: ['13']
+  - id: "18"
+    slug: reconciliation-parity
+    name: "Reconciliation & Parity Agent"
+    domain: quality
+    tier: L2
+    core_original_scope: false
+    spec: agents/18-reconciliation-parity/spec.yaml
+    skill: agents/18-reconciliation-parity/SKILL.md
+    hard_deps: ['09']
+    soft_deps: ['14']
+  - id: "19"
+    slug: root-cause-analysis
+    name: "Root Cause Analysis Agent"
+    domain: quality
+    tier: L2
+    core_original_scope: false
+    spec: agents/19-root-cause-analysis/spec.yaml
+    skill: agents/19-root-cause-analysis/SKILL.md
+    hard_deps: ['04']
+    soft_deps: []
+  - id: "20"
+    slug: remediation-self-healing
+    name: "Remediation / Self-Healing Agent"
+    domain: quality
+    tier: L3
+    core_original_scope: false
+    spec: agents/20-remediation-self-healing/spec.yaml
+    skill: agents/20-remediation-self-healing/SKILL.md
+    hard_deps: ['19', '24']
+    soft_deps: ['16']
+  - id: "21"
+    slug: schema-drift-impact
+    name: "Schema Drift & Impact Agent"
+    domain: quality
+    tier: L2
+    core_original_scope: false
+    spec: agents/21-schema-drift-impact/spec.yaml
+    skill: agents/21-schema-drift-impact/SKILL.md
+    hard_deps: ['04', '13']
+    soft_deps: []
+  - id: "22"
+    slug: finops
+    name: "FinOps Agent"
+    domain: operations
+    tier: L2
+    core_original_scope: false
+    spec: agents/22-finops/spec.yaml
+    skill: agents/22-finops/SKILL.md
+    hard_deps: []
+    soft_deps: []
+  - id: "23"
+    slug: performance-tuning
+    name: "Performance Tuning Agent"
+    domain: operations
+    tier: L2
+    core_original_scope: false
+    spec: agents/23-performance-tuning/spec.yaml
+    skill: agents/23-performance-tuning/SKILL.md
+    hard_deps: []
+    soft_deps: ['22', '04']
+  - id: "24"
+    slug: orchestration-backfill
+    name: "Orchestration & Backfill Agent"
+    domain: operations
+    tier: L2
+    core_original_scope: false
+    spec: agents/24-orchestration-backfill/spec.yaml
+    skill: agents/24-orchestration-backfill/SKILL.md
+    hard_deps: ['04']
+    soft_deps: ['15']
+  - id: "25"
+    slug: capacity-retention
+    name: "Capacity & Retention Agent"
+    domain: operations
+    tier: L1
+    core_original_scope: false
+    spec: agents/25-capacity-retention/spec.yaml
+    skill: agents/25-capacity-retention/SKILL.md
+    hard_deps: []
+    soft_deps: ['27', '13', '22']
+  - id: "26"
+    slug: access-entitlement
+    name: "Access & Entitlement Agent"
+    domain: governance
+    tier: L1
+    core_original_scope: false
+    spec: agents/26-access-entitlement/spec.yaml
+    skill: agents/26-access-entitlement/SKILL.md
+    hard_deps: ['02']
+    soft_deps: ['07']
+  - id: "27"
+    slug: privacy-retention
+    name: "Privacy & Retention Agent"
+    domain: governance
+    tier: L1
+    core_original_scope: false
+    spec: agents/27-privacy-retention/spec.yaml
+    skill: agents/27-privacy-retention/SKILL.md
+    hard_deps: ['02', '04']
+    soft_deps: []
+  - id: "28"
+    slug: regulatory-evidence
+    name: "Regulatory Evidence Agent"
+    domain: governance
+    tier: L1
+    core_original_scope: false
+    spec: agents/28-regulatory-evidence/spec.yaml
+    skill: agents/28-regulatory-evidence/SKILL.md
+    hard_deps: ['04']
+    soft_deps: ['16', '26', '13', '18', '20', '27']
+  - id: "29"
+    slug: data-product-publishing
+    name: "Data Product Publishing Agent"
+    domain: governance
+    tier: L1
+    core_original_scope: false
+    spec: agents/29-data-product-publishing/spec.yaml
+    skill: agents/29-data-product-publishing/SKILL.md
+    hard_deps: ['13', '16', '03']
+    soft_deps: ['12']
+  - id: "30"
+    slug: bi-rationalization
+    name: "BI Rationalization Agent"
+    domain: consumption
+    tier: L1
+    core_original_scope: false
+    spec: agents/30-bi-rationalization/spec.yaml
+    skill: agents/30-bi-rationalization/SKILL.md
+    hard_deps: ['04']
+    soft_deps: ['12']
+  - id: "31"
+    slug: analyst-assist-nl-sql
+    name: "Analyst Assist (NL→SQL) Agent"
+    domain: consumption
+    tier: L2
+    core_original_scope: false
+    spec: agents/31-analyst-assist-nl-sql/spec.yaml
+    skill: agents/31-analyst-assist-nl-sql/SKILL.md
+    hard_deps: ['12']
+    soft_deps: ['29']
+  - id: "32"
+    slug: request-intake
+    name: "Request Intake Agent"
+    domain: consumption
+    tier: L1
+    core_original_scope: false
+    spec: agents/32-request-intake/spec.yaml
+    skill: agents/32-request-intake/SKILL.md
+    hard_deps: ['03']
+    soft_deps: ['29', '12', '31']
+  - id: "33"
+    slug: supervisor-orchestrator
+    name: "Supervisor / Orchestrator Agent"
+    domain: cross-cutting
+    tier: L2
+    core_original_scope: false
+    spec: agents/33-supervisor-orchestrator/spec.yaml
+    skill: agents/33-supervisor-orchestrator/SKILL.md
+    hard_deps: []
+    soft_deps: []
+  - id: "34"
+    slug: evaluator
+    name: "Evaluator Agent"
+    domain: cross-cutting
+    tier: L2
+    core_original_scope: false
+    spec: agents/34-evaluator/spec.yaml
+    skill: agents/34-evaluator/SKILL.md
+    hard_deps: []
+    soft_deps: []
+  - id: "35"
+    slug: reviewer
+    name: "Reviewer Agent"
+    domain: cross-cutting
+    tier: L1
+    core_original_scope: false
+    spec: agents/35-reviewer/spec.yaml
+    skill: agents/35-reviewer/SKILL.md
+    hard_deps: []
+    soft_deps: []

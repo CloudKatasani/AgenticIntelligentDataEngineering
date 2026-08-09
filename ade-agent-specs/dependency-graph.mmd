@@ -1,0 +1,122 @@
+graph TD
+  subgraph discovery
+    A01["01 Source Profiling Agent"]
+    A02["02 Data Classification Agent"]
+    A03["03 Catalog & Documentation Agent"]
+    A04["04 Lineage Reconstruction Agent"]
+    A05["05 Glossary & Semantic Alignment Agent"]
+    A06["06 Source System Interrogation Agent"]
+  end
+  subgraph build
+    A07["07 SchemaBuilder Agent"]
+    A08["08 Data Modeling Agent"]
+    A09["09 Data Mapping Agent"]
+    A10["10 Coding Agent"]
+    A11["11 Test Generation Agent"]
+    A12["12 Semantic Layer Agent"]
+    A13["13 Data Contract Agent"]
+    A14["14 Legacy Modernization Agent"]
+    A15["15 Ingestion Pattern Agent"]
+  end
+  subgraph quality
+    A16["16 Data Quality Rules Agent"]
+    A17["17 Anomaly & Freshness Agent"]
+    A18["18 Reconciliation & Parity Agent"]
+    A19["19 Root Cause Analysis Agent"]
+    A20["20 Remediation / Self-Healing Agent"]
+    A21["21 Schema Drift & Impact Agent"]
+  end
+  subgraph operations
+    A22["22 FinOps Agent"]
+    A23["23 Performance Tuning Agent"]
+    A24["24 Orchestration & Backfill Agent"]
+    A25["25 Capacity & Retention Agent"]
+  end
+  subgraph governance
+    A26["26 Access & Entitlement Agent"]
+    A27["27 Privacy & Retention Agent"]
+    A28["28 Regulatory Evidence Agent"]
+    A29["29 Data Product Publishing Agent"]
+  end
+  subgraph consumption
+    A30["30 BI Rationalization Agent"]
+    A31["31 Analyst Assist (NL→SQL) Agent"]
+    A32["32 Request Intake Agent"]
+  end
+  subgraph cross_cutting
+    A33["33 Supervisor / Orchestrator Agent"]
+    A34["34 Evaluator Agent"]
+    A35["35 Reviewer Agent"]
+  end
+  A01 --> A02
+  A05 -.-> A02
+  A01 --> A03
+  A04 -.-> A03
+  A05 -.-> A03
+  A01 --> A05
+  A03 -.-> A05
+  A08 --> A07
+  A02 --> A07
+  A01 --> A08
+  A05 --> A08
+  A06 -.-> A08
+  A08 --> A09
+  A01 --> A09
+  A06 -.-> A09
+  A04 -.-> A09
+  A09 --> A10
+  A07 --> A10
+  A15 -.-> A10
+  A09 --> A11
+  A01 --> A11
+  A08 -.-> A11
+  A08 --> A12
+  A05 --> A12
+  A07 -.-> A12
+  A07 --> A13
+  A16 --> A13
+  A06 --> A14
+  A09 -.-> A14
+  A01 --> A15
+  A01 --> A16
+  A02 --> A16
+  A05 -.-> A16
+  A13 -.-> A17
+  A09 --> A18
+  A14 -.-> A18
+  A04 --> A19
+  A19 --> A20
+  A24 --> A20
+  A16 -.-> A20
+  A04 --> A21
+  A13 --> A21
+  A22 -.-> A23
+  A04 -.-> A23
+  A04 --> A24
+  A15 -.-> A24
+  A27 -.-> A25
+  A13 -.-> A25
+  A22 -.-> A25
+  A02 --> A26
+  A07 -.-> A26
+  A02 --> A27
+  A04 --> A27
+  A04 --> A28
+  A16 -.-> A28
+  A26 -.-> A28
+  A13 -.-> A28
+  A18 -.-> A28
+  A20 -.-> A28
+  A27 -.-> A28
+  A13 --> A29
+  A16 --> A29
+  A03 --> A29
+  A12 -.-> A29
+  A04 --> A30
+  A12 -.-> A30
+  A12 --> A31
+  A29 -.-> A31
+  A03 --> A32
+  A29 -.-> A32
+  A12 -.-> A32
+  A31 -.-> A32

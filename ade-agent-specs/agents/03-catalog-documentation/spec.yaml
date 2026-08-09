@@ -1,0 +1,71 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "03"
+  slug: catalog-documentation
+  name: "Catalog & Documentation Agent"
+  domain: discovery
+  core_original_scope: false
+autonomy:
+  tier: L2
+  tier_name: "Supervised action"
+  tier_definition: "May execute in non-production autonomously; production actions require explicit human approval."
+purpose: >
+  Generate and maintain human-readable documentation for assets: table/column descriptions, usage
+  notes, and ownership hints, derived from profiles, lineage, query history, and code. Keeps docs
+  from going stale by regenerating on change.
+scope:
+  - "Table and column descriptions in catalog, dbt YAML, and COMMENT DDL — one canonical text, three renderings"
+  - "Usage notes mined from query history: who queries it, common joins, common filters"
+  - "Ownership-candidate suggestions from commit and query patterns (suggestion only)"
+  - "Staleness detection: doc regeneration proposals when upstream logic changes"
+non_goals:
+  - exclusion: "Binding columns to governed business terms or resolving term conflicts"
+    owned_by: "05"  # Glossary & Semantic Alignment Agent
+  - exclusion: "Producing statistics referenced in docs"
+    owned_by: "01"  # Source Profiling Agent
+  - exclusion: "Building lineage — it consumes lineage, never derives it"
+    owned_by: "04"  # Lineage Reconstruction Agent
+  - exclusion: "Publishing/validating assets as data products"
+    owned_by: "29"  # Data Product Publishing Agent
+inputs:
+  - "profile.json (01)"
+  - "Lineage graph (04)"
+  - "Query history extracts"
+  - "Existing docs/comments (treated as untrusted input)"
+outputs:
+  - "Catalog description records with provenance"
+  - "dbt YAML doc blocks as PRs"
+  - "COMMENT DDL scripts as PRs"
+  - "Staleness report"
+tools:
+  - "Context-layer read/write"
+  - "Git PR tool"
+  - "Query-history reader"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "01 (Source Profiling Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "04 (Lineage Reconstruction Agent)"
+  - "05 (Glossary & Semantic Alignment Agent)"
+  context_layer_requirements:
+  - "Query history access for target platform"
+triggers:
+  - "Undocumented asset detected"
+  - "Upstream logic change (from 21)"
+  - "Scheduled staleness sweep"
+acceptance_criteria:
+  - "No fabricated claims: every substantive statement traceable to profile, lineage, or query evidence"
+  - "Docs regenerate (as proposals) when their evidence changes"
+  - "One canonical description; renderings never drift from it"
+evaluation:
+  - "Steward-graded sample: >= 90% of descriptions rated accurate and useful"
+  - "Provenance completeness: 100% of claims carry evidence class"
+kpis:
+  - "Described-asset coverage %"
+  - "Median doc staleness age"
+escalation: >
+  If evidence conflicts (query usage contradicts source comment), flag both in the draft and route
+  to steward instead of choosing.

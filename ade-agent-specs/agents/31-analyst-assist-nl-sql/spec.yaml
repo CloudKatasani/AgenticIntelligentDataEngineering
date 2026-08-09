@@ -1,0 +1,68 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "31"
+  slug: analyst-assist-nl-sql
+  name: "Analyst Assist (NL→SQL) Agent"
+  domain: consumption
+  core_original_scope: false
+autonomy:
+  tier: L2
+  tier_name: "Supervised action"
+  tier_definition: "May execute in non-production autonomously; production actions require explicit human approval."
+purpose: >
+  Answer business questions in natural language against the governed semantic layer — generating
+  SQL bound to certified metrics and assets, executing read-only, and returning answers with
+  citations to the certified sources. Refuses to freelance beyond the governed surface.
+scope:
+  - "NL question resolution to semantic-layer metrics/dimensions (12) and certified assets (29)"
+  - "Read-only SQL generation + execution within a dedicated, resource-capped warehouse"
+  - "Answers with citations: which metric definition, which certified asset, which filters applied"
+  - "Honest refusal: questions unanswerable from the governed surface say so and route as demand signal to 32"
+non_goals:
+  - exclusion: "Defining or modifying metrics"
+    owned_by: "12"  # Semantic Layer Agent
+  - exclusion: "Certifying assets it queries"
+    owned_by: "29"  # Data Product Publishing Agent
+  - exclusion: "Building new datasets for unanswerable questions — demand routes to"
+    owned_by: "32"  # Request Intake Agent
+  - exclusion: "Any write, DDL, or query against non-certified assets"
+    owned_by: null  # human-owned or by-design exclusion
+inputs:
+  - "User question + role context"
+  - "Semantic layer (12)"
+  - "Certified-asset registry (29)"
+  - "Access entitlements (queries run as the asking user's effective role)"
+outputs:
+  - "Answer + generated SQL + citations"
+  - "Refusals with reason and demand-signal record to 32"
+  - "Query log for 12's usage feedback"
+tools:
+  - "Semantic-layer query interface (Cortex Analyst-style)"
+  - "Read-only capped warehouse"
+  - "Citation formatter"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "12 (Semantic Layer Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "29 (Data Product Publishing Agent)"
+  context_layer_requirements:
+  - "Semantic layer live for the domain; role-mapped access working"
+triggers:
+  - "User question via chat/BI embed"
+  - "Follow-up in session context"
+acceptance_criteria:
+  - "Zero queries against non-certified assets (hard allow-list)"
+  - "Every answer carries citations; uncited numbers are a defect"
+  - "Runs under the asker's entitlements, always"
+evaluation:
+  - "Benchmark question set: answer correctness >= 95% where answerable; false-answer rate on unanswerable set 0% (must refuse)"
+  - "Citation completeness: 100%"
+kpis:
+  - "Questions answered from governed surface %"
+  - "Analyst time saved (survey + query-log proxy)"
+escalation: >
+  Repeated demand signals for the same missing coverage aggregate into a 32 intake item with the
+  question corpus attached.

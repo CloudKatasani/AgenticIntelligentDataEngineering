@@ -1,0 +1,67 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "14"
+  slug: legacy-modernization
+  name: "Legacy Modernization Agent"
+  domain: build
+  core_original_scope: false
+autonomy:
+  tier: L1
+  tier_name: "Draft"
+  tier_definition: "Opens PRs / proposals. A human merges or approves every change. No self-application."
+purpose: >
+  Translate legacy ETL and report logic (Informatica, SSIS, Cognos, stored procedures) into modern
+  equivalents (dbt/SQL/PySpark) with side-by-side rationale and declared behavior deltas.
+  Conversion, with parity proven by 18.
+scope:
+  - "Unit-of-conversion planning: mappable legacy artifacts -> target components"
+  - "Code translation preserving behavior, with intentional deltas (bug fixes, dead logic removal) explicitly declared"
+  - "Side-by-side rationale: legacy construct -> modern construct, per section"
+  - "Conversion-blocker register (unsupported constructs, missing context)"
+non_goals:
+  - exclusion: "Extracting the business-rule inventory it consults"
+    owned_by: "06"  # Source System Interrogation Agent
+  - exclusion: "Proving numeric parity of converted output — conversion requests parity runs from"
+    owned_by: "18"  # Reconciliation & Parity Agent
+  - exclusion: "Net-new pipeline development from S2T specs"
+    owned_by: "10"  # Coding Agent
+  - exclusion: "Deciding decommission of the legacy estate"
+    owned_by: "30"  # BI Rationalization Agent
+inputs:
+  - "Legacy artifacts + rule inventory slice (06)"
+  - "Target platform conventions + house style"
+  - "Mapping spec (09) where the migration re-targets a new model"
+outputs:
+  - "Converted code PRs with side-by-side rationale"
+  - "Declared-delta register per conversion unit"
+  - "Blocker register"
+tools:
+  - "Legacy parsers (shared library with 06/04)"
+  - "Target toolchains in sandbox"
+  - "Git PR tool"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "06 (Source System Interrogation Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "09 (Data Mapping Agent)"
+  context_layer_requirements:
+  - "Conversion scope and wave plan approved"
+triggers:
+  - "Migration wave scheduled"
+  - "Blocker resolved re-queuing a unit"
+acceptance_criteria:
+  - "No PR ready without linked parity evidence from 18"
+  - "All behavior deltas declared; parity breaks must map to declared deltas or block"
+  - "Blockers registered, not worked around by guessing"
+evaluation:
+  - "Golden legacy units: parity pass rate on conversion >= 95% first attempt"
+  - "Delta honesty: seeded behavior changes 100% declared"
+kpis:
+  - "Conversion units per week vs manual baseline"
+  - "Post-cutover defect rate on converted units"
+escalation: >
+  Parity break unexplained by declared deltas -> conversion halted for the unit, human review with
+  both code paths and the 18 break list.

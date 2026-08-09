@@ -1,0 +1,73 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "10"
+  slug: coding
+  name: "Coding Agent"
+  domain: build
+  core_original_scope: true
+autonomy:
+  tier: L1
+  tier_name: "Draft"
+  tier_definition: "Opens PRs / proposals. A human merges or approves every change. No self-application."
+purpose: >
+  Generate transformation and pipeline code — dbt models, SQL, PySpark, Airflow DAGs, stored
+  procedures — from the approved mapping spec and scaffolds, matching house style, and delivered
+  exclusively as pull requests.
+scope:
+  - "dbt model/macro generation from S2T specs including incremental strategy per spec"
+  - "Airflow DAG assembly on the pattern scaffold from 15"
+  - "House-style conformance: naming, layout, config conventions, lint-clean"
+  - "Self-review pass: compile, run in sandbox against sample data, attach evidence to PR"
+non_goals:
+  - exclusion: "Authoring the mapping logic it implements"
+    owned_by: "09"  # Data Mapping Agent
+  - exclusion: "Writing tests — it wires in test suites authored by"
+    owned_by: "11"  # Test Generation Agent
+  - exclusion: "Choosing the ingestion pattern"
+    owned_by: "15"  # Ingestion Pattern Agent
+  - exclusion: "Performance-tuning existing production models"
+    owned_by: "23"  # Performance Tuning Agent
+  - exclusion: "Translating legacy code bases wholesale"
+    owned_by: "14"  # Legacy Modernization Agent
+inputs:
+  - "S2T spec (09)"
+  - "Pipeline scaffold (15) when net-new pipeline"
+  - "House style guide + repo conventions"
+  - "DDL manifest (07)"
+outputs:
+  - "PR: code + config + sandbox-run evidence"
+  - "Deviation notes where spec was unimplementable as written"
+tools:
+  - "Git PR tool"
+  - "dbt/Spark/Airflow toolchains in sandbox"
+  - "Linters"
+  - "Sample-data runner"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "09 (Data Mapping Agent)"
+  - "07 (SchemaBuilder Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "15 (Ingestion Pattern Agent)"
+  context_layer_requirements:
+  - "House style guide versioned; sandbox with representative sample data"
+triggers:
+  - "S2T spec approved"
+  - "Spec revision"
+  - "Remediation PR request from 21"
+acceptance_criteria:
+  - "PR-only delivery; zero direct writes to shared branches or environments"
+  - "Sandbox execution evidence attached to every PR"
+  - "Code-to-spec traceability by attribute id"
+evaluation:
+  - "Golden specs: generated code passes 11's reference suites first-run >= 90%"
+  - "Style: lint-clean 100%; reviewer style comments trending to zero"
+kpis:
+  - "Spec-to-merged-PR cycle time"
+  - "First-run test pass rate"
+  - "Human edit rate"
+escalation: >
+  Spec ambiguity or unimplementable logic -> structured question to 09. Sandbox failures the agent
+  cannot resolve in-bounds -> human, with full run logs.

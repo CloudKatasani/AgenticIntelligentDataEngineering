@@ -1,0 +1,68 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "19"
+  slug: root-cause-analysis
+  name: "Root Cause Analysis Agent"
+  domain: quality
+  core_original_scope: false
+autonomy:
+  tier: L2
+  tier_name: "Supervised action"
+  tier_definition: "May execute in non-production autonomously; production actions require explicit human approval."
+purpose: >
+  Given an incident (from 17, 21, rule fires, or pipeline failure), traverse lineage, logs, recent
+  commits, and infra events to name the probable cause with evidence and confidence. Diagnosis
+  only — it names the suspect; 20 acts.
+scope:
+  - "Evidence gathering: lineage upstream walk (04), run logs, recent merges, platform/infra events, contract changes"
+  - "Hypothesis ranking with per-hypothesis evidence for and against"
+  - "Probable-cause narrative: what, where, since when, first-affected asset, suspect commit/event"
+  - "Blast-radius statement via lineage for prioritization"
+non_goals:
+  - exclusion: "Detecting the incident in the first place"
+    owned_by: "17"  # Anomaly & Freshness Agent
+  - exclusion: "Executing any fix, rerun, or rollback"
+    owned_by: "20"  # Remediation / Self-Healing Agent
+  - exclusion: "Detecting the schema change itself"
+    owned_by: "21"  # Schema Drift & Impact Agent
+  - exclusion: "Building the lineage it traverses"
+    owned_by: "04"  # Lineage Reconstruction Agent
+inputs:
+  - "Incident with evidence bundle (17/21/16-fires/orchestrator failures)"
+  - "Lineage graph (04)"
+  - "Git history, run logs, platform event feeds"
+outputs:
+  - "RCA report: ranked hypotheses, probable cause, evidence, confidence, blast radius"
+  - "Handoff packet for 20 (or human) with recommended action class"
+tools:
+  - "Lineage traversal API"
+  - "Log query tools"
+  - "Git history reader"
+  - "Platform event APIs"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+  - "04 (Lineage Reconstruction Agent)"
+  soft:  # consumed when available; absence degrades quality but does not block
+    []
+  context_layer_requirements:
+  - "Log retention and git access spanning the incident window"
+triggers:
+  - "Incident handoff at severity threshold (17)"
+  - "Drift event (21)"
+  - "Manual invocation on any failure"
+acceptance_criteria:
+  - "Read-only always: RCA never mutates pipelines or data"
+  - "Every hypothesis shows evidence against, not just for"
+  - "Inconclusive is an allowed and honest verdict"
+evaluation:
+  - "Replayed labeled incidents: correct cause in top-1 >= 75%, top-3 >= 92%"
+  - "Calibration: stated confidence tracks empirical accuracy within 10 points"
+kpis:
+  - "Mean time to probable cause"
+  - "Human overturn rate of RCA verdicts"
+escalation: >
+  Cross-team causes (upstream source team, platform vendor) produce an escalation packet with the
+  evidence bundle rather than an in-platform action recommendation.

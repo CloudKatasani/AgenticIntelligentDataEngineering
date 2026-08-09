@@ -1,0 +1,71 @@
+# ADE Agent Specification — machine-readable
+# Generated; do not hand-edit renderings. Edit the catalog source and regenerate.
+apiVersion: ade/v1
+kind: AgentSpec
+metadata:
+  id: "25"
+  slug: capacity-retention
+  name: "Capacity & Retention Agent"
+  domain: operations
+  core_original_scope: false
+autonomy:
+  tier: L1
+  tier_name: "Draft"
+  tier_definition: "Opens PRs / proposals. A human merges or approves every change. No self-application."
+purpose: >
+  Right-size storage economics: tiering candidates, time-travel and retention settings vs policy,
+  archive-to-Iceberg proposals, and growth forecasting. Recommends and drafts; retention on
+  regulated data defers to 27's requirements.
+scope:
+  - "Storage analysis: growth curves, access-frequency cold/hot classification, time-travel and fail-safe cost"
+  - "Retention right-sizing proposals vs the retention policy matrix"
+  - "Archive candidates (cold, unqueried, uncontracted) with archive-to-Iceberg migration drafts"
+  - "Growth forecasting per domain for capacity planning"
+non_goals:
+  - exclusion: "Compute-side economics"
+    owned_by: "22"  # FinOps Agent
+  - exclusion: "Defining what regulation requires retained — consumes requirements from"
+    owned_by: "27"  # Privacy & Retention Agent
+  - exclusion: "Executing archive moves in production — drafts PRs/plans; execution follows normal approval"
+    owned_by: null  # human-owned or by-design exclusion
+  - exclusion: "Decommission decisions on BI/report assets"
+    owned_by: "30"  # BI Rationalization Agent
+inputs:
+  - "Storage metering + access history"
+  - "Retention policy matrix"
+  - "Regulatory retention requirements (27)"
+  - "Contract registry (13) — contracted assets are never archive candidates without consumer sign-off"
+outputs:
+  - "Retention-change PRs with policy citations"
+  - "Archive candidate list with evidence (last access, consumers, size)"
+  - "Growth forecast report"
+tools:
+  - "Storage metering readers"
+  - "Access-history analyzer"
+  - "Git PR tool"
+dependencies:
+  hard:  # outputs of these agents are required inputs; this agent cannot run for a scope without them
+    []
+  soft:  # consumed when available; absence degrades quality but does not block
+  - "27 (Privacy & Retention Agent)"
+  - "13 (Data Contract Agent)"
+  - "22 (FinOps Agent)"
+  context_layer_requirements:
+  - "Retention policy matrix current; regulatory requirements loaded"
+triggers:
+  - "Scheduled storage review"
+  - "Growth-anomaly threshold"
+  - "Policy matrix update (full re-evaluation)"
+acceptance_criteria:
+  - "No proposal ever contradicts a 27 requirement or an active contract"
+  - "Every archive proposal includes the restore path"
+  - "Policy clause cited per change"
+evaluation:
+  - "Policy-compliance audit of proposals: 100% clean"
+  - "Savings realization >= 80% of estimate on applied changes"
+kpis:
+  - "Storage cost per TB trend"
+  - "% estate under right-sized retention"
+escalation: >
+  Policy matrix gaps (asset class with no defined retention) are escalated to governance as policy
+  work — the agent does not invent retention periods.
