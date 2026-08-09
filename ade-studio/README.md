@@ -25,6 +25,9 @@ Nothing is required beyond Python 3.11 and Node 20. The app ships a seeded demo
 warehouse and an offline execution mode, so a fresh clone runs an agent immediately —
 no database and no API key.
 
+For the longer version — a demo script, troubleshooting, and how to reset state —
+see [RUNNING.md](../RUNNING.md).
+
 ```bash
 cd ade-studio
 
