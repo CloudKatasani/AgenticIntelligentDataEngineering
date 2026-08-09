@@ -28,47 +28,47 @@ machine-readable `spec.yaml` and an operator-readable `SKILL.md`.
 
 | ID | Agent | Domain | Tier | Hard deps | Soft deps |
 |---|---|---|---|---|---|
-| 01 | [Source Profiling Agent](agents/01-source-profiling/SKILL.md) | discovery | L2 | — | — |
-| 02 ★ | [Data Classification Agent](agents/02-data-classification/SKILL.md) | discovery | L1 | 01 | 05 |
-| 03 | [Catalog & Documentation Agent](agents/03-catalog-documentation/SKILL.md) | discovery | L2 | 01 | 04, 05 |
-| 04 | [Lineage Reconstruction Agent](agents/04-lineage-reconstruction/SKILL.md) | discovery | L2 | — | — |
-| 05 | [Glossary & Semantic Alignment Agent](agents/05-glossary-semantic-alignment/SKILL.md) | discovery | L1 | 01 | 03 |
-| 06 | [Source System Interrogation Agent](agents/06-source-system-interrogation/SKILL.md) | discovery | L1 | — | — |
-| 07 ★ | [SchemaBuilder Agent](agents/07-schema-builder/SKILL.md) | build | L1 | 08, 02 | — |
-| 08 ★ | [Data Modeling Agent](agents/08-data-modeling/SKILL.md) | build | L0 | 01, 05 | 06 |
-| 09 ★ | [Data Mapping Agent](agents/09-data-mapping/SKILL.md) | build | L1 | 08, 01 | 06, 04 |
-| 10 ★ | [Coding Agent](agents/10-coding/SKILL.md) | build | L1 | 09, 07 | 15 |
-| 11 | [Test Generation Agent](agents/11-test-generation/SKILL.md) | build | L1 | 09, 01 | 08 |
-| 12 | [Semantic Layer Agent](agents/12-semantic-layer/SKILL.md) | build | L1 | 08, 05 | 07 |
-| 13 | [Data Contract Agent](agents/13-data-contract/SKILL.md) | build | L1 | 07, 16 | — |
-| 14 | [Legacy Modernization Agent](agents/14-legacy-modernization/SKILL.md) | build | L1 | 06 | 09 |
-| 15 | [Ingestion Pattern Agent](agents/15-ingestion-pattern/SKILL.md) | build | L1 | 01 | — |
-| 16 ★ | [Data Quality Rules Agent](agents/16-data-quality-rules/SKILL.md) | quality | L1 | 01, 02 | 05 |
-| 17 | [Anomaly & Freshness Agent](agents/17-anomaly-freshness/SKILL.md) | quality | L4 | — | 13 |
-| 18 | [Reconciliation & Parity Agent](agents/18-reconciliation-parity/SKILL.md) | quality | L2 | 09 | 14 |
-| 19 | [Root Cause Analysis Agent](agents/19-root-cause-analysis/SKILL.md) | quality | L2 | 04 | — |
-| 20 | [Remediation / Self-Healing Agent](agents/20-remediation-self-healing/SKILL.md) | quality | L3 | 19, 24 | 16 |
-| 21 | [Schema Drift & Impact Agent](agents/21-schema-drift-impact/SKILL.md) | quality | L2 | 04, 13 | — |
-| 22 | [FinOps Agent](agents/22-finops/SKILL.md) | operations | L2 | — | — |
-| 23 | [Performance Tuning Agent](agents/23-performance-tuning/SKILL.md) | operations | L2 | — | 22, 04 |
-| 24 | [Orchestration & Backfill Agent](agents/24-orchestration-backfill/SKILL.md) | operations | L2 | 04 | 15 |
-| 25 | [Capacity & Retention Agent](agents/25-capacity-retention/SKILL.md) | operations | L1 | — | 27, 13, 22 |
-| 26 | [Access & Entitlement Agent](agents/26-access-entitlement/SKILL.md) | governance | L1 | 02 | 07 |
-| 27 | [Privacy & Retention Agent](agents/27-privacy-retention/SKILL.md) | governance | L1 | 02, 04 | — |
-| 28 | [Regulatory Evidence Agent](agents/28-regulatory-evidence/SKILL.md) | governance | L1 | 04 | 16, 26, 13, 18, 20, 27 |
-| 29 | [Data Product Publishing Agent](agents/29-data-product-publishing/SKILL.md) | governance | L1 | 13, 16, 03 | 12 |
-| 30 | [BI Rationalization Agent](agents/30-bi-rationalization/SKILL.md) | consumption | L1 | 04 | 12 |
-| 31 | [Analyst Assist (NL→SQL) Agent](agents/31-analyst-assist-nl-sql/SKILL.md) | consumption | L2 | 12 | 29 |
-| 32 | [Request Intake Agent](agents/32-request-intake/SKILL.md) | consumption | L1 | 03 | 29, 12, 31 |
-| 33 | [Supervisor / Orchestrator Agent](agents/33-supervisor-orchestrator/SKILL.md) | cross-cutting | L2 | — | — |
-| 34 | [Evaluator Agent](agents/34-evaluator/SKILL.md) | cross-cutting | L2 | — | — |
-| 35 | [Reviewer Agent](agents/35-reviewer/SKILL.md) | cross-cutting | L1 | — | — |
+| 01 | [Source Profiling Agent](ade-agent-specs/agents/01-source-profiling/SKILL.md) | discovery | L2 | — | — |
+| 02 ★ | [Data Classification Agent](ade-agent-specs/agents/02-data-classification/SKILL.md) | discovery | L1 | 01 | 05 |
+| 03 | [Catalog & Documentation Agent](ade-agent-specs/agents/03-catalog-documentation/SKILL.md) | discovery | L2 | 01 | 04, 05 |
+| 04 | [Lineage Reconstruction Agent](ade-agent-specs/agents/04-lineage-reconstruction/SKILL.md) | discovery | L2 | — | — |
+| 05 | [Glossary & Semantic Alignment Agent](ade-agent-specs/agents/05-glossary-semantic-alignment/SKILL.md) | discovery | L1 | 01 | 03 |
+| 06 | [Source System Interrogation Agent](ade-agent-specs/agents/06-source-system-interrogation/SKILL.md) | discovery | L1 | — | — |
+| 07 ★ | [SchemaBuilder Agent](ade-agent-specs/agents/07-schema-builder/SKILL.md) | build | L1 | 08, 02 | — |
+| 08 ★ | [Data Modeling Agent](ade-agent-specs/agents/08-data-modeling/SKILL.md) | build | L0 | 01, 05 | 06 |
+| 09 ★ | [Data Mapping Agent](ade-agent-specs/agents/09-data-mapping/SKILL.md) | build | L1 | 08, 01 | 06, 04 |
+| 10 ★ | [Coding Agent](ade-agent-specs/agents/10-coding/SKILL.md) | build | L1 | 09, 07 | 15 |
+| 11 | [Test Generation Agent](ade-agent-specs/agents/11-test-generation/SKILL.md) | build | L1 | 09, 01 | 08 |
+| 12 | [Semantic Layer Agent](ade-agent-specs/agents/12-semantic-layer/SKILL.md) | build | L1 | 08, 05 | 07 |
+| 13 | [Data Contract Agent](ade-agent-specs/agents/13-data-contract/SKILL.md) | build | L1 | 07, 16 | — |
+| 14 | [Legacy Modernization Agent](ade-agent-specs/agents/14-legacy-modernization/SKILL.md) | build | L1 | 06 | 09 |
+| 15 | [Ingestion Pattern Agent](ade-agent-specs/agents/15-ingestion-pattern/SKILL.md) | build | L1 | 01 | — |
+| 16 ★ | [Data Quality Rules Agent](ade-agent-specs/agents/16-data-quality-rules/SKILL.md) | quality | L1 | 01, 02 | 05 |
+| 17 | [Anomaly & Freshness Agent](ade-agent-specs/agents/17-anomaly-freshness/SKILL.md) | quality | L4 | — | 13 |
+| 18 | [Reconciliation & Parity Agent](ade-agent-specs/agents/18-reconciliation-parity/SKILL.md) | quality | L2 | 09 | 14 |
+| 19 | [Root Cause Analysis Agent](ade-agent-specs/agents/19-root-cause-analysis/SKILL.md) | quality | L2 | 04 | — |
+| 20 | [Remediation / Self-Healing Agent](ade-agent-specs/agents/20-remediation-self-healing/SKILL.md) | quality | L3 | 19, 24 | 16 |
+| 21 | [Schema Drift & Impact Agent](ade-agent-specs/agents/21-schema-drift-impact/SKILL.md) | quality | L2 | 04, 13 | — |
+| 22 | [FinOps Agent](ade-agent-specs/agents/22-finops/SKILL.md) | operations | L2 | — | — |
+| 23 | [Performance Tuning Agent](ade-agent-specs/agents/23-performance-tuning/SKILL.md) | operations | L2 | — | 22, 04 |
+| 24 | [Orchestration & Backfill Agent](ade-agent-specs/agents/24-orchestration-backfill/SKILL.md) | operations | L2 | 04 | 15 |
+| 25 | [Capacity & Retention Agent](ade-agent-specs/agents/25-capacity-retention/SKILL.md) | operations | L1 | — | 27, 13, 22 |
+| 26 | [Access & Entitlement Agent](ade-agent-specs/agents/26-access-entitlement/SKILL.md) | governance | L1 | 02 | 07 |
+| 27 | [Privacy & Retention Agent](ade-agent-specs/agents/27-privacy-retention/SKILL.md) | governance | L1 | 02, 04 | — |
+| 28 | [Regulatory Evidence Agent](ade-agent-specs/agents/28-regulatory-evidence/SKILL.md) | governance | L1 | 04 | 16, 26, 13, 18, 20, 27 |
+| 29 | [Data Product Publishing Agent](ade-agent-specs/agents/29-data-product-publishing/SKILL.md) | governance | L1 | 13, 16, 03 | 12 |
+| 30 | [BI Rationalization Agent](ade-agent-specs/agents/30-bi-rationalization/SKILL.md) | consumption | L1 | 04 | 12 |
+| 31 | [Analyst Assist (NL→SQL) Agent](ade-agent-specs/agents/31-analyst-assist-nl-sql/SKILL.md) | consumption | L2 | 12 | 29 |
+| 32 | [Request Intake Agent](ade-agent-specs/agents/32-request-intake/SKILL.md) | consumption | L1 | 03 | 29, 12, 31 |
+| 33 | [Supervisor / Orchestrator Agent](ade-agent-specs/agents/33-supervisor-orchestrator/SKILL.md) | cross-cutting | L2 | — | — |
+| 34 | [Evaluator Agent](ade-agent-specs/agents/34-evaluator/SKILL.md) | cross-cutting | L2 | — | — |
+| 35 | [Reviewer Agent](ade-agent-specs/agents/35-reviewer/SKILL.md) | cross-cutting | L1 | — | — |
 
 ## Files
 
 ```
 ade-agent-specs/
-├── README.md                  ← this file
+├── README.md                  ← catalog index (same content as this file)
 ├── registry.yaml              ← machine-readable fleet registry
 ├── dependency-graph.mmd       ← Mermaid DAG (hard deps solid, soft deps dotted)
 └── agents/
