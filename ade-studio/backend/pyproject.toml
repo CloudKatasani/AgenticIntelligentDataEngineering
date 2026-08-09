@@ -1,0 +1,38 @@
+[project]
+name = "ade-studio-backend"
+version = "0.1.0"
+description = "ADE Studio — control plane for the Agentic Data Engineering agent fleet"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "PyYAML>=6.0",
+    "python-multipart>=0.0.9",
+    "duckdb>=1.0",
+    "anthropic>=0.40",
+]
+
+[project.optional-dependencies]
+# Source-system drivers. Each is optional: the connector registry reports a
+# driver as unavailable rather than failing at import time, so the app runs
+# with zero database drivers installed.
+snowflake = ["snowflake-connector-python>=3.10"]
+oracle = ["oracledb>=2.2"]
+postgres = ["psycopg[binary]>=3.1"]
+mysql = ["PyMySQL>=1.1"]
+mssql = ["pymssql>=2.3"]
+bigquery = ["google-cloud-bigquery>=3.25"]
+databricks = ["databricks-sql-connector>=3.3"]
+dev = ["pytest>=8.2", "httpx>=0.27"]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
