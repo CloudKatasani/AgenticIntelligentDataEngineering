@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useQuery } from '../lib/hooks'
+import { getOperator, setOperator } from '../lib/operator'
 
 interface Health {
   agents_loaded: number
@@ -12,6 +13,7 @@ const NAV = [
   { to: '/', label: 'Overview', end: true, icon: '◈' },
   { to: '/fleet', label: 'Agent fleet', icon: '⬡' },
   { to: '/runs', label: 'Runs & artifacts', icon: '▤' },
+  { to: '/observability', label: 'Observability & FinOps', icon: '◎' },
   { to: '/academy', label: 'Academy', icon: '✦' },
   { to: '/graph', label: 'Dependency graph', icon: '⇄' },
   { to: '/connections', label: 'Sources', icon: '⛁' },
@@ -19,6 +21,7 @@ const NAV = [
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { data: health } = useQuery<Health>('/api/health')
+  const [operator, setOperatorState] = useState(getOperator)
 
   return (
     <div className="flex min-h-screen">
@@ -54,6 +57,25 @@ export default function Layout({ children }: { children: ReactNode }) {
             </NavLink>
           ))}
         </nav>
+
+        <div className="border-t border-ink-800 px-4 py-3">
+          <label className="label" htmlFor="operator">
+            Operator
+          </label>
+          <input
+            id="operator"
+            value={operator}
+            onChange={(event) => {
+              setOperatorState(event.target.value)
+              setOperator(event.target.value)
+            }}
+            placeholder="you@company.com"
+            className="input mt-1.5 h-8 py-0 text-xs"
+          />
+          <p className="mt-1.5 text-[11px] leading-relaxed text-slate-600">
+            Recorded on runs and approvals. Declared, not authenticated.
+          </p>
+        </div>
 
         <div className="border-t border-ink-800 p-4 text-[11px] leading-relaxed text-slate-500">
           <div className="flex items-center gap-2">

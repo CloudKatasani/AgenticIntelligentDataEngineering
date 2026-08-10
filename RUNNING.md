@@ -104,7 +104,17 @@ downstream dependency. Approving 05 is what unblocks 08. That is the autonomy
 tier and the dependency graph enforcing each other, and it is structural — no
 prompt asks the model to behave this way.
 
-**6. Open the Academy tab.** Every lesson is generated from that agent's own
+**6. Open Observability & FinOps.** The runs you just did are now measured:
+fleet coverage (you have touched a handful of 35), which gate blocked what,
+the approval queue, spend by model, and adoption per operator. Coverage is
+deliberately the headline rather than run count — the question a client is
+actually asking is how much of the fleet they use, not how busy one agent is.
+
+Set the **Operator** field in the sidebar before running if you want the
+adoption table to show real names. It is recorded on runs and approvals, and
+the tab says plainly that it is declared rather than authenticated.
+
+**7. Open the Academy tab.** Every lesson is generated from that agent's own
 `spec.yaml` and `SKILL.md`, so the training material cannot drift from the
 contract the runtime enforces.
 
@@ -188,7 +198,7 @@ backend can serve the built bundle from one process in a demo.
 
 ```bash
 cd ade-studio
-backend/.venv/bin/python -m pytest backend        # 70 tests, ~12s
+backend/.venv/bin/python -m pytest backend        # 92 tests, ~8s
 ```
 
 The suite asserts the invariants the product rests on rather than the shape of

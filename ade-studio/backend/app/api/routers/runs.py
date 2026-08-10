@@ -33,6 +33,7 @@ class RunInput(BaseModel):
     max_output_tokens: int = 16_000
     parameters: dict[str, object] = Field(default_factory=dict)
     objective: str = ""
+    actor: str = "operator"
     cost_cap_usd: float | None = None
     override_dependency_gate: bool = False
     override_reason: str = ""
@@ -52,6 +53,7 @@ class RunInput(BaseModel):
             ),
             parameters=self.parameters,
             objective=self.objective,
+            actor=self.actor,
             cost_cap_usd=self.cost_cap_usd,
             override_dependency_gate=self.override_dependency_gate,
             override_reason=self.override_reason,
@@ -166,6 +168,8 @@ def _summary(run) -> dict[str, object]:  # noqa: ANN001 — domain Run
         "model_id": run.model_id,
         "effort": run.effort,
         "provider": run.provider,
+        "requested_by": run.requested_by,
+        "approved_by": run.approved_by,
         "created_at": run.created_at,
         "duration_ms": run.duration_ms,
         "artifact_count": len(run.artifacts),

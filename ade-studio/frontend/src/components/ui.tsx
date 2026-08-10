@@ -75,6 +75,66 @@ export function Stat({
   )
 }
 
+/** A labelled proportion bar. Used wherever a share matters more than a count. */
+export function Meter({
+  ratio,
+  tone = 'accent',
+  className = '',
+}: {
+  ratio: number
+  tone?: 'accent' | 'good' | 'warn' | 'bad'
+  className?: string
+}) {
+  const fill = {
+    accent: 'bg-accent',
+    good: 'bg-emerald-400',
+    warn: 'bg-amber-400',
+    bad: 'bg-rose-400',
+  }[tone]
+  return (
+    <div className={`h-1.5 w-full overflow-hidden rounded-full bg-ink-800 ${className}`}>
+      <div
+        className={`h-full rounded-full ${fill}`}
+        style={{ width: `${Math.min(100, Math.max(0, ratio * 100))}%` }}
+      />
+    </div>
+  )
+}
+
+/**
+ * A dense daily bar series.
+ *
+ * Every day in the window is rendered, including empty ones — a sparse series
+ * drawn as bars closes its own gaps and makes intermittent use look continuous.
+ */
+export function BarSeries({
+  points,
+  format,
+  tone = 'bg-accent',
+}: {
+  points: { date: string; value: number; runs: number }[]
+  format: (value: number) => string
+  tone?: string
+}) {
+  const max = Math.max(...points.map((p) => p.value), 1)
+  return (
+    <div className="flex h-24 items-end gap-px">
+      {points.map((point) => (
+        <div
+          key={point.date}
+          className="group relative flex-1"
+          title={`${point.date}: ${format(point.value)} (${point.runs} run${point.runs === 1 ? '' : 's'})`}
+        >
+          <div
+            className={`w-full rounded-sm ${point.value > 0 ? tone : 'bg-ink-800'}`}
+            style={{ height: `${point.value > 0 ? Math.max(6, (point.value / max) * 88) : 2}px` }}
+          />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function Empty({ title, hint }: { title: string; hint?: string }) {
   return (
     <div className="rounded-lg border border-dashed border-ink-700 px-6 py-10 text-center">

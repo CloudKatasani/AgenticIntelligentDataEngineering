@@ -10,6 +10,7 @@ from app.core.config import Settings, get_settings
 from app.services.academy_service import AcademyService
 from app.services.catalog_service import CatalogService, get_catalog_service
 from app.services.graph_service import GraphService
+from app.services.observability_service import ObservabilityService
 from app.services.run_service import RunService
 
 
@@ -31,6 +32,11 @@ def get_connection_repository() -> JsonConnectionRepository:
 @lru_cache(maxsize=1)
 def get_graph_service() -> GraphService:
     return GraphService(get_catalog_service())
+
+
+@lru_cache(maxsize=1)
+def get_observability_service() -> ObservabilityService:
+    return ObservabilityService(get_catalog_service())
 
 
 @lru_cache(maxsize=1)

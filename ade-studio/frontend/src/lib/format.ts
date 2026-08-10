@@ -100,3 +100,22 @@ export function formatDateTime(iso: string): string {
 export function percent(ratio: number): string {
   return `${(ratio * 100).toFixed(ratio > 0 && ratio < 0.001 ? 4 : 2)}%`
 }
+
+/** Percentage rounded to whole points, for dashboard figures where decimals are noise. */
+export function pct(ratio: number): string {
+  return `${Math.round(ratio * 100)}%`
+}
+
+export function formatTokens(value: number): string {
+  if (value < 1000) return String(value)
+  if (value < 1_000_000) return `${(value / 1000).toFixed(1)}K`
+  return `${(value / 1_000_000).toFixed(2)}M`
+}
+
+/** Relative age, for queue items where "9h ago" reads better than a timestamp. */
+export function formatAge(hours: number | null): string {
+  if (hours == null) return '—'
+  if (hours < 1) return `${Math.round(hours * 60)}m`
+  if (hours < 48) return `${Math.round(hours)}h`
+  return `${Math.round(hours / 24)}d`
+}

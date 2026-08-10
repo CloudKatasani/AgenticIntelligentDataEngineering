@@ -104,11 +104,7 @@ class RunService:
         connection = self._connection(request)
         gates = self._evaluate_gates(agent, request, connection, dry_run=True)
         model = get_model(request.model.model_id)
-
-        # Rough: the brief is dominated by the profile table, ~90 tokens/column.
-        columns = sum(max(len(d.columns), 12) for d in request.datasets) or 20
-        estimated_input = estimate_tokens(agent.skill_markdown) + columns * 90 + 900
-        estimated_output = min(request.model.max_output_tokens, 1200 * len(agent.artifacts) + 800)
+        estimated_input, estimated_output, estimated_cost = self._estimate(agent, request)
 
         return {
             "agent": {"id": agent.id, "name": agent.name, "tier": agent.tier.value},
@@ -124,11 +120,31 @@ class RunService:
             "estimate": {
                 "input_tokens": estimated_input,
                 "output_tokens": estimated_output,
-                "cost_usd": round(model.estimate_cost_usd(estimated_input, estimated_output), 4),
+                "cost_usd": estimated_cost,
                 "model": model.display_name,
                 "note": "Approximate. The run records the provider's actual usage.",
             },
         }
+
+    def _estimate(self, agent: Any, request: RunRequest) -> tuple[int, int, float]:
+        """List-price cost of a run before it happens.
+
+        Recorded on every run, not only shown in the preview. An offline run
+        bills nothing, so without this the FinOps view has nothing to say until
+        a model is connected — and "what would this fleet activity have cost"
+        is exactly the question being asked at that point. It is list price
+        against estimated tokens, and every surface that shows it says so.
+        """
+        model = get_model(request.model.model_id)
+        # Rough: the brief is dominated by the profile table, ~90 tokens/column.
+        columns = sum(max(len(d.columns), 12) for d in request.datasets) or 20
+        estimated_input = estimate_tokens(agent.skill_markdown) + columns * 90 + 900
+        estimated_output = min(request.model.max_output_tokens, 1200 * len(agent.artifacts) + 800)
+        return (
+            estimated_input,
+            estimated_output,
+            round(model.estimate_cost_usd(estimated_input, estimated_output), 6),
+        )
 
     # ------------------------------------------------------------------ #
     # Gates
@@ -298,10 +314,12 @@ class RunService:
             request=request,
             model_id=request.model.model_id,
             effort=request.model.effort.value,
+            requested_by=request.actor.strip() or "operator",
             created_at=utcnow_iso(),
             started_at=utcnow_iso(),
         )
         run.add_event("Run created", agent=agent.id, model=request.model.model_id)
+        run.estimated_cost_usd = self._estimate(agent, request)[2]
 
         gates = self._evaluate_gates(agent, request, connection, dry_run=False)
         run.gates = gates
