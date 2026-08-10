@@ -79,6 +79,20 @@ This is the sequence worth walking a client through, because each step shows a
 guardrail rather than just another output. It is a verified path — the gate
 messages quoted below are what the app actually says.
 
+**0. Open the Canvas tab first.** Before running anything, it shows a worked
+example for every agent — the exact input on the left, the artifacts it
+generates on the right, full file bodies. All 35 are set in one estate, so the
+tab reads as a single migration: a mainframe customer master becoming a
+certified customer-360 product.
+
+Start on **06 Source System Interrogation**: a COBOL copybook and a risk
+program go in, and a rule inventory comes out with a file and line beside every
+rule — including a dormancy override that inverts credit risk and would cost a
+migration six months if it were missed.
+
+Each example says what to point at, and what the agent refused to do. Every one
+carries a **Run it for real** button that opens the workbench with that agent.
+
 **1. Run agent 01 on `RETAIL.CUSTOMERS`.** Artifacts, downloads, real numbers.
 
 **2. Try agent 07 (SchemaBuilder) next, and watch it refuse.**
@@ -237,7 +251,7 @@ backend can serve the built bundle from one process in a demo.
 
 ```bash
 cd ade-studio
-backend/.venv/bin/python -m pytest backend        # 156 tests, ~7s
+backend/.venv/bin/python -m pytest backend        # 444 tests, ~11s
 ```
 
 The suite asserts the invariants the product rests on rather than the shape of

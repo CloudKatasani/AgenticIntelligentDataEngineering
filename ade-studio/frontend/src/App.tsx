@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import Academy from './pages/Academy'
 import AcademyLesson from './pages/AcademyLesson'
+import Canvas from './pages/Canvas'
 import Connections from './pages/Connections'
 import Dashboard from './pages/Dashboard'
 import Fleet from './pages/Fleet'
@@ -17,6 +18,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/fleet" element={<Fleet />} />
+        <Route path="/canvas" element={<Canvas />} />
+        <Route path="/canvas/:agentId" element={<Canvas />} />
         <Route path="/agents/:agentId" element={<Workbench />} />
         <Route path="/runs" element={<Runs />} />
         <Route path="/runs/:runId" element={<RunDetailPage />} />

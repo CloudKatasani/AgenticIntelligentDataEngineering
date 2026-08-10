@@ -182,6 +182,9 @@ export default function Workbench() {
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-400">{agent.purpose}</p>
           </div>
           <div className="flex shrink-0 gap-2">
+            <Link to={`/canvas/${agent.id}`} className="btn-ghost">
+              ▧ Worked example
+            </Link>
             <Link to={`/academy/${agent.id}`} className="btn-ghost">
               ✦ Learn this agent
             </Link>

@@ -12,6 +12,7 @@ interface Health {
 const NAV = [
   { to: '/', label: 'Overview', end: true, icon: '◈' },
   { to: '/fleet', label: 'Agent fleet', icon: '⬡' },
+  { to: '/canvas', label: 'Canvas', icon: '▧' },
   { to: '/runs', label: 'Runs & artifacts', icon: '▤' },
   { to: '/observability', label: 'Observability & FinOps', icon: '◎' },
   { to: '/academy', label: 'Academy', icon: '✦' },
