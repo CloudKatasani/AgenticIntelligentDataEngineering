@@ -88,6 +88,15 @@ class RunRequest(BaseModel):
     objective: str = ""
     """Free-text intent from the operator, appended to the task brief."""
 
+    actor: str = "operator"
+    """Who asked for this run.
+
+    Self-declared: the product has no authentication, so this is an operator
+    label rather than an authenticated identity. It is recorded anyway, because
+    adoption cannot be measured without knowing who ran what, and a stated
+    limitation is more useful than a missing field.
+    """
+
     cost_cap_usd: float | None = None
     override_dependency_gate: bool = False
     override_reason: str = ""
@@ -124,6 +133,10 @@ class Run(BaseModel):
 
     error: str | None = None
     provider: str = ""
+
+    requested_by: str = "operator"
+    """Mirrored off the request so adoption queries never unpack it."""
+
     approved_by: str | None = None
     approved_at: str | None = None
 

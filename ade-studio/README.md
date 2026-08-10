@@ -99,6 +99,29 @@ Each agent has a file contract: agent 07 emits `schema.sql`, `schema-contract.ya
 individually or as a zip containing a `MANIFEST.json` with full provenance — model,
 effort, gates, objects, token usage and approval record.
 
+### Observability and FinOps
+
+A tab that answers the four questions a client asks after the pilot: which of the 35
+agents do we actually use, what is the fleet doing and where does it stop, where does
+the money go, and who is using this.
+
+Portfolio is measured as **coverage, not volume** — an estate running one agent four
+hundred times has a problem that a run count hides, so the tab reports agents exercised
+per domain and per tier, names every agent never run, and shows what share of activity
+sits on the single busiest one. Per-agent usage gives runs, outcome mix, artifacts,
+spend, p50/p95 duration and distinct operators for all 35. Guardrail outcomes show
+which gate refuses work most often — a high hard-dependency block rate means the fleet
+is being driven out of order. Adoption reports operator breadth across the fleet and
+whether people came back after their first run.
+
+Everything is counted from the run journal. Two figures are not measurements — the
+30-day projection and the modelled list-price cost — and both say so wherever they
+appear. The modelled figure exists because an offline run bills nothing, and "what
+would this activity have cost" is exactly the question at that point.
+
+Operator identity is self-declared: there is no authentication, and the tab states that
+where it counts people rather than implying a verified identity.
+
 ### Academy
 
 A tab that teaches the fleet: why each agent exists, what it owns, what it must never do
@@ -146,7 +169,7 @@ backend/app/
 │   ├── deterministic/profiler.py   Every number an agent reports
 │   ├── prompt.py                   SKILL.md verbatim + task brief + output schema
 │   └── artifact_plans.py           Per-agent file contracts and parameters
-├── services/      Catalog, graph, models, runs, academy
+├── services/      Catalog, graph, models, runs, academy, observability
 └── api/           FastAPI routers; deps.py is the composition root
 ```
 
@@ -159,8 +182,8 @@ outputs, so a new spec is runnable immediately.
 ## Tests
 
 ```bash
-backend/.venv/bin/python -m pytest backend
-node frontend/scripts/e2e-smoke.mjs      # drives a real run through the UI
+backend/.venv/bin/python -m pytest backend        # 92 tests
+node frontend/scripts/e2e-smoke.mjs               # drives a real run through the UI
 ```
 
 The suite asserts the invariants the product rests on: all 35 agents load, every

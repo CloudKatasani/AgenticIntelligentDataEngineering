@@ -9,7 +9,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routers import academy, agents, connections, graph, health, models, runs
+from app.api.routers import (
+    academy,
+    agents,
+    connections,
+    graph,
+    health,
+    models,
+    observability,
+    runs,
+)
 from app.core.config import get_settings
 from app.core.errors import install_exception_handlers
 from app.core.ids import utcnow_iso
@@ -49,6 +58,7 @@ def create_app() -> FastAPI:
         models.router,
         runs.router,
         academy.router,
+        observability.router,
     ):
         app.include_router(router)
 

@@ -24,6 +24,7 @@ import type {
 import { api } from '../lib/api'
 import { formatCost } from '../lib/format'
 import { useMutation, useQuery } from '../lib/hooks'
+import { getOperator } from '../lib/operator'
 
 interface ModelsResponse {
   models: ModelDescriptor[]
@@ -97,10 +98,14 @@ export default function Workbench() {
     [agentId, connectionId, objects, modelId, effort, agent, parameters, objective, costCap, override, overrideReason],
   )
 
+  // The operator is read at call time rather than memoised into `body`: a
+  // memo would freeze whoever was signed in when the page mounted.
   const previewMutation = useMutation(async () =>
-    api.post<RunPreview>('/api/runs/preview', body),
+    api.post<RunPreview>('/api/runs/preview', { ...body, actor: getOperator() }),
   )
-  const runMutation = useMutation(async () => api.post<RunDetail>('/api/runs', body))
+  const runMutation = useMutation(async () =>
+    api.post<RunDetail>('/api/runs', { ...body, actor: getOperator() }),
+  )
 
   // Re-check the guardrails whenever the configuration changes.
   const refreshPreview = useCallback(async () => {

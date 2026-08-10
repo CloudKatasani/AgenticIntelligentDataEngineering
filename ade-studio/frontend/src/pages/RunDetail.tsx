@@ -13,6 +13,7 @@ import type { RunArtifact, RunDetail } from '../lib/api'
 import { api } from '../lib/api'
 import { formatBytes, formatCost, formatDateTime, formatDuration, percent } from '../lib/format'
 import { useMutation, useQuery } from '../lib/hooks'
+import { getOperator } from '../lib/operator'
 
 export default function RunDetailPage() {
   const { runId } = useParams<{ runId: string }>()
@@ -23,7 +24,7 @@ export default function RunDetailPage() {
   const [content, setContent] = useState<string>('')
 
   const decide = useMutation(async (approve: boolean) =>
-    api.post<RunDetail>(`/api/runs/${runId}/decision`, { approve, actor: 'operator' }),
+    api.post<RunDetail>(`/api/runs/${runId}/decision`, { approve, actor: getOperator() }),
   )
 
   if (loading) return <Spinner label="Loading run" />
