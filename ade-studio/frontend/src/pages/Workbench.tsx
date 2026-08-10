@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import ModelPicker from '../components/ModelPicker'
-import ObjectPicker, { type SelectedObject } from '../components/ObjectPicker'
+import type { DocumentSpace } from '../components/FilePicker'
+import InputSlots, {
+  KindBadge,
+  slotFilled,
+  type InputContract,
+  type SlotValue,
+} from '../components/InputSlots'
 import {
   DomainBadge,
   Empty,
@@ -43,9 +49,14 @@ export default function Workbench() {
   const { data: connectionsData } = useQuery<{ connections: ConnectionSummary[] }>(
     '/api/connections',
   )
+  const { data: contract } = useQuery<InputContract>(
+    agentId ? `/api/inputs/contract/${agentId}` : null,
+    [agentId],
+  )
+  const { data: spacesData } = useQuery<{ spaces: DocumentSpace[] }>('/api/inputs/spaces')
 
   const [connectionId, setConnectionId] = useState<string | null>(null)
-  const [objects, setObjects] = useState<SelectedObject[]>([])
+  const [slotValues, setSlotValues] = useState<Record<string, SlotValue>>({})
   const [modelId, setModelId] = useState('')
   const [effort, setEffort] = useState('high')
   const [parameters, setParameters] = useState<Record<string, unknown>>({})
@@ -67,7 +78,7 @@ export default function Workbench() {
       }
     }
     setParameters(defaults)
-    setObjects([])
+    setSlotValues({})
     setPreview(null)
   }, [agent])
 
@@ -76,16 +87,43 @@ export default function Workbench() {
     if (!connectionId && list.length) setConnectionId(list[0].id)
   }, [connectionsData, connectionId])
 
+  // One binding per slot the agent declared, in the shape the API expects.
+  // Empty slots are dropped rather than sent as blanks, so the gate reports
+  // "needs a metering export" instead of "received an empty metering export".
+  const inputs = useMemo(() => {
+    const payload: Record<string, unknown> = {}
+    for (const slot of contract?.slots ?? []) {
+      const value = slotValues[slot.key]
+      if (!slotFilled(slot, value)) continue
+      if (slot.kind === 'database_objects') {
+        payload[slot.key] = {
+          origin: 'connection',
+          connection_id: connectionId,
+          datasets: value.objects.map((object) => ({
+            database: object.database,
+            schema_name: object.schema_name,
+            table: object.table,
+            columns: object.columns,
+          })),
+        }
+      } else if (slot.kind === 'structured_request') {
+        payload[slot.key] = { origin: 'inline', text: value.text }
+      } else {
+        // Files from several spaces can fill one slot; the origin recorded is
+        // the space the first file came from, and each id carries its own.
+        const spaceId = value.files[0]?.space_id ?? ''
+        const kind = (spacesData?.spaces ?? []).find((s) => s.id === spaceId)?.kind ?? 'upload'
+        payload[slot.key] = { origin: kind, file_ids: value.files.map((f) => f.id) }
+      }
+    }
+    return payload
+  }, [contract, slotValues, connectionId, spacesData])
+
   const body = useMemo(
     () => ({
       agent_id: agentId ?? '',
       connection_id: connectionId,
-      datasets: objects.map((object) => ({
-        database: object.database,
-        schema_name: object.schema_name,
-        table: object.table,
-        columns: object.columns,
-      })),
+      inputs,
       model_id: modelId,
       effort,
       max_output_tokens: agent?.recommended_model.max_output_tokens ?? 16000,
@@ -95,7 +133,7 @@ export default function Workbench() {
       override_dependency_gate: override,
       override_reason: overrideReason,
     }),
-    [agentId, connectionId, objects, modelId, effort, agent, parameters, objective, costCap, override, overrideReason],
+    [agentId, connectionId, inputs, modelId, effort, agent, parameters, objective, costCap, override, overrideReason],
   )
 
   // The operator is read at call time rather than memoised into `body`: a
@@ -172,28 +210,41 @@ export default function Workbench() {
       ) : null}
 
       <Section
-        title="1 · Source and objects"
+        title="1 · Inputs"
         description={
-          agent.requires_dataset
-            ? 'This agent reasons over specific database objects. Pick at least one.'
-            : 'This agent reasons over the estate. Objects are optional context.'
+          contract
+            ? contract.upstream_only
+              ? 'Everything this agent needs comes from upstream agents.'
+              : `What ${contract.agent_name} needs, taken from its own spec.`
+            : 'Loading this agent\u2019s input contract\u2026'
+        }
+        actions={
+          contract && !contract.upstream_only ? (
+            <KindBadge kind={contract.primary_kind} label={contract.primary_kind_label} />
+          ) : undefined
         }
       >
-        {connections.length === 0 ? (
-          <Empty
-            title="No sources registered"
-            hint="Add a Snowflake, Oracle or other source under Sources — or use the bundled demo warehouse."
-          />
+        {!contract ? (
+          <Spinner label="Loading input contract" />
         ) : (
-          <ObjectPicker
+          <InputSlots
+            contract={contract}
+            values={slotValues}
+            onChange={(key, value) => setSlotValues((current) => ({ ...current, [key]: value }))}
             connections={connections}
             connectionId={connectionId}
             onConnectionChange={(id) => {
               setConnectionId(id)
-              setObjects([])
+              // Object selections belong to the source they were made against.
+              setSlotValues((current) => {
+                const next: Record<string, SlotValue> = {}
+                for (const [key, value] of Object.entries(current)) {
+                  next[key] = { ...value, objects: [] }
+                }
+                return next
+              })
             }}
-            selected={objects}
-            onChange={setObjects}
+            spaces={spacesData?.spaces ?? []}
           />
         )}
       </Section>

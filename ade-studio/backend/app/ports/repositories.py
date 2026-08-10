@@ -5,6 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 from app.domain.connection import SourceConnection
+from app.domain.document import DocumentSpace
 from app.domain.run import Artifact, Run
 
 
@@ -47,3 +48,17 @@ class ConnectionRepository(ABC):
 
     @abstractmethod
     def delete(self, connection_id: str) -> None: ...
+
+
+class DocumentSpaceRepository(ABC):
+    @abstractmethod
+    def save(self, space: DocumentSpace) -> None: ...
+
+    @abstractmethod
+    def get(self, space_id: str) -> DocumentSpace | None: ...
+
+    @abstractmethod
+    def list(self) -> list[DocumentSpace]: ...
+
+    @abstractmethod
+    def delete(self, space_id: str) -> None: ...

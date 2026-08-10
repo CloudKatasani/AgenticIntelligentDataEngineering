@@ -104,7 +104,23 @@ downstream dependency. Approving 05 is what unblocks 08. That is the autonomy
 tier and the dependency graph enforcing each other, and it is structural — no
 prompt asks the model to behave this way.
 
-**6. Open Observability & FinOps.** The runs you just did are now measured:
+**6. Now run agent 06, which reads no tables at all.** It asks for legacy
+artifacts instead — expand `legacy` in the file picker and select `CUSTMAST.cpy`
+and `RSKCALC.cbl`. The findings come back citing the copybook's 14 fields, and
+the run's event log records which files were read and where they came from.
+
+This is the point most worth making: **only 6 of the 35 agents read database
+tables.** Agent 04 reads SQL and ETL exports, agent 22 reads a metering export,
+agent 26 reads your entitlement matrix, agent 33 reads a sentence. Every slot
+the workbench shows is quoted from that agent's own `spec.yaml`, printed
+underneath it. Agents 09 and 11 ask for nothing at all, and say so.
+
+Files can come from SharePoint, a Teams channel, a shared drive, S3 or an
+upload — registered once under **Sources → File sources**. The sample space
+seeded on first boot is a shared drive; the Uploads space next to it takes
+files from your machine.
+
+**7. Open Observability & FinOps.** The runs you just did are now measured:
 fleet coverage (you have touched a handful of 35), which gate blocked what,
 the approval queue, spend by model, and adoption per operator. Coverage is
 deliberately the headline rather than run count — the question a client is
@@ -114,14 +130,32 @@ Set the **Operator** field in the sidebar before running if you want the
 adoption table to show real names. It is recorded on runs and approvals, and
 the tab says plainly that it is declared rather than authenticated.
 
-**7. Open the Academy tab.** Every lesson is generated from that agent's own
+**8. Open the Academy tab.** Every lesson is generated from that agent's own
 `spec.yaml` and `SKILL.md`, so the training material cannot drift from the
 contract the runtime enforces.
 
-Two more moments if you have time: **agent 33** blocks on a missing required
-parameter (`Fleet goal`) rather than guessing one, and **agent 20** refuses to
-execute against production at all — its remediation output is always a
-reviewable plan.
+Two more moments if you have time: **agent 33** blocks with "Supervisor /
+Orchestrator Agent needs: Fleet goal and scope" rather than guessing an
+objective, and **agent 20** refuses to execute against production at all — its
+remediation output is always a reviewable plan.
+
+## What's in the sample file workspace
+
+The demo warehouse serves the six agents that read tables. The rest read files,
+so a sample space is seeded next to it at
+`backend/.ade-studio-data/sample_documents`:
+
+| Folder | Contents | Agents it serves |
+|---|---|---|
+| `legacy/` | A COBOL copybook with a packed-decimal balance and an undocumented status code, a nightly risk-calculation program, an Informatica mapping export | 06, 14 |
+| `warehouse-code/` | Two SQL loads with real read/write lineage between `RAW`, `LEGACY` and `ANALYTICS` | 04, 23, 35 |
+| `telemetry/` | Warehouse metering, pipeline run history with a failure and a double-load, query history, a grants inventory, a BI estate inventory, schema snapshots, an incident log | 17, 19, 21, 22, 23, 25, 26, 30 |
+| `policies/` | Sensitivity taxonomy, business glossary, role-entitlement matrix, remediation action catalog, retention and legal-hold policy, data product SLAs, control catalog | 02, 05, 13, 20, 26, 27, 28 |
+
+Like the warehouse, these are deliberately imperfect: the metering export has a
+credit spike and untagged rows, the grants inventory contains a grant to
+`PUBLIC` and a contractor role that outlived its contract, and the pipeline
+history has both a failed run and a day that loaded twice.
 
 ## What's in the demo warehouse
 
@@ -167,6 +201,11 @@ backend/.venv/bin/pip install -e "backend[snowflake,oracle,postgres]"
 Available extras: `snowflake`, `oracle`, `postgres`, `mysql`, `mssql`,
 `bigquery`, `databricks`.
 
+For file sources, `sharepoint` covers both SharePoint and Teams, `aws` covers
+S3, and `documents` adds PDF text extraction. Uploads and shared drives need
+nothing. Each reports itself unreachable with the install hint rather than
+failing mid-run.
+
 Add the source under **Sources**, hit **Test**, and it appears in the object
 picker. The picker, profiler and run engine work identically across every
 dialect, including flat files (CSV/Parquet/JSON).
@@ -198,7 +237,7 @@ backend can serve the built bundle from one process in a demo.
 
 ```bash
 cd ade-studio
-backend/.venv/bin/python -m pytest backend        # 92 tests, ~8s
+backend/.venv/bin/python -m pytest backend        # 156 tests, ~7s
 ```
 
 The suite asserts the invariants the product rests on rather than the shape of
@@ -227,7 +266,10 @@ Everything the app writes goes to one directory:
 ```
 ade-studio/backend/.ade-studio-data/
 ├── artifacts/              every run's output files
-├── connections.json        saved sources (secrets masked on read)
+├── uploads/                files uploaded through the workbench
+├── sample_documents/       the seeded sample file workspace
+├── connections.json        saved database sources (secrets masked on read)
+├── document_spaces.json    saved file sources (secrets masked on read)
 ├── runs.json               the run journal
 └── demo_warehouse.duckdb   the seeded demo data
 ```

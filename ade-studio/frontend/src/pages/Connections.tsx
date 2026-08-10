@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Empty, ErrorNote, Field, InfoNote, Section, Spinner, Toggle } from '../components/ui'
 import type { ConnectionSummary, SourceCapability } from '../lib/api'
 import { api } from '../lib/api'
+import DocumentSpaces from '../components/DocumentSpaces'
 import { useMutation, useQuery } from '../lib/hooks'
 
 const FIELD_LABELS: Record<string, string> = {
@@ -54,8 +55,9 @@ export default function Connections() {
         <div>
           <h1 className="text-2xl font-semibold text-white">Sources</h1>
           <p className="mt-1 max-w-3xl text-sm text-slate-400">
-            Register the systems agents read from. Every connection is used read-only: the
-            connectors refuse any statement that could mutate a source.
+            Register the systems agents read from — databases below, and the places files live
+            beneath them. Everything is read-only: the connectors refuse any statement that could
+            mutate a source, and ADE Studio never writes to a SharePoint library or a bucket.
           </p>
         </div>
         <button type="button" className="btn-primary" onClick={() => setAdding((v) => !v)}>
@@ -73,7 +75,9 @@ export default function Connections() {
         />
       ) : null}
 
-      <Section title="Registered sources">
+      <DocumentSpaces />
+
+      <Section title="Registered databases">
         {data.connections.length === 0 ? (
           <Empty title="No sources yet" hint="Add one above to get started." />
         ) : (

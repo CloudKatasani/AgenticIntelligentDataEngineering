@@ -68,11 +68,20 @@ class Settings(BaseSettings):
         return self.data_root / "connections.json"
 
     @property
+    def spaces_path(self) -> Path:
+        return self.data_root / "document_spaces.json"
+
+    @property
+    def uploads_dir(self) -> Path:
+        return self.data_root / "uploads"
+
+    @property
     def demo_warehouse_path(self) -> Path:
         return self.data_root / "demo_warehouse.duckdb"
 
     def ensure_dirs(self) -> None:
         self.artifacts_dir.mkdir(parents=True, exist_ok=True)
+        self.uploads_dir.mkdir(parents=True, exist_ok=True)
 
 
 @lru_cache(maxsize=1)

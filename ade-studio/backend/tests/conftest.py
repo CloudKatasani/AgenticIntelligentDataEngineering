@@ -16,12 +16,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.adapters.storage.filesystem_artifact_store import FilesystemArtifactStore  # noqa: E402
 from app.adapters.storage.json_repositories import (  # noqa: E402
     JsonConnectionRepository,
+    JsonDocumentSpaceRepository,
     JsonRunRepository,
 )
 from app.core.config import Settings  # noqa: E402
 from app.core.ids import utcnow_iso  # noqa: E402
 from app.domain.connection import Environment, SourceConnection, SourceKind  # noqa: E402
 from app.services.catalog_service import CatalogService, get_catalog_service  # noqa: E402
+from app.services.input_service import InputService  # noqa: E402
 from app.services.run_service import RunService  # noqa: E402
 
 
@@ -69,7 +71,10 @@ def demo_connection(settings: Settings) -> SourceConnection:
 
 @pytest.fixture
 def run_service(
-    settings: Settings, catalog: CatalogService, demo_connection: SourceConnection
+    settings: Settings,
+    catalog: CatalogService,
+    demo_connection: SourceConnection,
+    input_service: InputService,
 ) -> RunService:
     settings.ensure_dirs()
     connections = JsonConnectionRepository(settings.connections_path)
@@ -80,4 +85,44 @@ def run_service(
         artifacts=FilesystemArtifactStore(settings.artifacts_dir),
         connections=connections,
         settings=settings,
+        inputs=input_service,
     )
+
+
+@pytest.fixture
+def sample_space(settings: Settings) -> JsonDocumentSpaceRepository:
+    """A shared-drive space holding the seeded sample artifacts.
+
+    The same files the app seeds on first boot, so the tests exercise the
+    document path against realistic content rather than a lorem-ipsum stub.
+    """
+    from app.adapters.documents.demo_artifacts import ensure_demo_documents
+    from app.domain.document import DocumentSpace, SpaceKind
+
+    root = settings.data_root / "sample_documents"
+    ensure_demo_documents(root)
+
+    spaces = JsonDocumentSpaceRepository(settings.spaces_path)
+    spaces.save(
+        DocumentSpace(
+            id="space_samples",
+            name="Sample artifacts",
+            kind=SpaceKind.SHARED_DRIVE,
+            root_path=str(root),
+            created_at=utcnow_iso(),
+        )
+    )
+    spaces.save(
+        DocumentSpace(
+            id="space_uploads",
+            name="Uploads",
+            kind=SpaceKind.UPLOAD,
+            created_at=utcnow_iso(),
+        )
+    )
+    return spaces
+
+
+@pytest.fixture
+def input_service(settings: Settings, sample_space: JsonDocumentSpaceRepository) -> InputService:
+    return InputService(sample_space, settings.uploads_dir)

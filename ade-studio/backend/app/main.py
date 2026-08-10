@@ -15,6 +15,7 @@ from app.api.routers import (
     connections,
     graph,
     health,
+    inputs,
     models,
     observability,
     runs,
@@ -59,10 +60,12 @@ def create_app() -> FastAPI:
         runs.router,
         academy.router,
         observability.router,
+        inputs.router,
     ):
         app.include_router(router)
 
     _seed_demo_connection()
+    _seed_demo_documents()
     _mount_frontend(app)
 
     log_event(logger, "app_started", environment=settings.environment, at=utcnow_iso())
@@ -100,6 +103,46 @@ def _seed_demo_connection() -> None:
 
     ensure_demo_warehouse(get_settings().demo_warehouse_path)
     log_event(logger, "demo_connection_seeded")
+
+
+def _seed_demo_documents() -> None:
+    """Register a sample workspace of files on first boot.
+
+    The demo warehouse only serves the six agents that read tables. Most of the
+    fleet reads files, so a clean install without this has nothing to offer
+    agent 04, 06, 14, 17, 22 or 26 — the majority of it.
+    """
+    from app.adapters.documents.demo_artifacts import FILE_COUNT, ensure_demo_documents
+    from app.api.deps import get_space_repository
+    from app.domain.document import DocumentSpace, SpaceKind
+
+    repo = get_space_repository()
+    settings = get_settings()
+
+    if not repo.get("space_samples"):
+        repo.save(
+            DocumentSpace(
+                id="space_samples",
+                name="Sample artifacts",
+                kind=SpaceKind.SHARED_DRIVE,
+                owner="ADE Studio",
+                root_path=str(settings.data_root / "sample_documents"),
+                created_at=utcnow_iso(),
+            )
+        )
+    if not repo.get("space_uploads"):
+        repo.save(
+            DocumentSpace(
+                id="space_uploads",
+                name="Uploads",
+                kind=SpaceKind.UPLOAD,
+                owner="ADE Studio",
+                created_at=utcnow_iso(),
+            )
+        )
+
+    ensure_demo_documents(settings.data_root / "sample_documents")
+    log_event(logger, "demo_documents_seeded", files=FILE_COUNT)
 
 
 def _mount_frontend(app: FastAPI) -> None:

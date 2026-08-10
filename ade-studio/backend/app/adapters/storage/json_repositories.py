@@ -12,8 +12,13 @@ import threading
 from pathlib import Path
 
 from app.domain.connection import SourceConnection
+from app.domain.document import DocumentSpace
 from app.domain.run import Run, RunStatus
-from app.ports.repositories import ConnectionRepository, RunRepository
+from app.ports.repositories import (
+    ConnectionRepository,
+    DocumentSpaceRepository,
+    RunRepository,
+)
 
 
 class JsonRunRepository(RunRepository):
@@ -132,4 +137,56 @@ class JsonConnectionRepository(ConnectionRepository):
     def delete(self, connection_id: str) -> None:
         with self._lock:
             self._load().pop(connection_id, None)
+            self._flush()
+
+
+class JsonDocumentSpaceRepository(DocumentSpaceRepository):
+    """Registered file locations. Same shape as the connection repository,
+    including persisting real secrets over the masked ``model_dump_json``
+    output so a saved SharePoint space still works after a restart."""
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self._lock = threading.Lock()
+        self._cache: dict[str, DocumentSpace] | None = None
+
+    def _load(self) -> dict[str, DocumentSpace]:
+        if self._cache is not None:
+            return self._cache
+        if not self.path.exists():
+            self._cache = {}
+            return self._cache
+        try:
+            raw = json.loads(self.path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            raw = {}
+        self._cache = {sid: DocumentSpace.model_validate(data) for sid, data in raw.items()}
+        return self._cache
+
+    def _flush(self) -> None:
+        assert self._cache is not None
+        payload = {sid: json.loads(space.model_dump_json()) for sid, space in self._cache.items()}
+        for sid, space in self._cache.items():
+            if space.client_secret is not None:
+                payload[sid]["client_secret"] = space.client_secret.get_secret_value()
+        tmp = self.path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        tmp.chmod(0o600)
+        tmp.replace(self.path)
+
+    def save(self, space: DocumentSpace) -> None:
+        with self._lock:
+            self._load()[space.id] = space
+            self._flush()
+
+    def get(self, space_id: str) -> DocumentSpace | None:
+        return self._load().get(space_id)
+
+    def list(self) -> list[DocumentSpace]:
+        return sorted(self._load().values(), key=lambda s: s.name.lower())
+
+    def delete(self, space_id: str) -> None:
+        with self._lock:
+            self._load().pop(space_id, None)
             self._flush()

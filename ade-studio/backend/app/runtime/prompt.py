@@ -128,6 +128,7 @@ def build_task_brief(
     objective: str,
     upstream: list[dict[str, Any]],
     effective_tier: str,
+    supplied_inputs: str = "",
 ) -> str:
     lines: list[str] = [
         f"# Task for agent {agent.id} — {agent.name}",
@@ -145,6 +146,13 @@ def build_task_brief(
         lines += ["## Operator objective", "", objective.strip(), ""]
 
     lines += _dataset_section(connection, profiles)
+
+    # What the operator supplied for this agent's declared input slots.
+    # Placed before the upstream section because it is the material the
+    # agent was asked about; upstream artifacts are context around it.
+    if supplied_inputs.strip():
+        lines += [supplied_inputs.strip(), ""]
+
     lines += _upstream_section(upstream)
 
     if parameters:
@@ -214,6 +222,7 @@ def simulation_context(
     profiles: list[TableProfile],
     datasets: list[str],
     parameters: dict[str, Any],
+    files: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Structured facts for the offline provider (see its module docstring)."""
     return {
@@ -228,6 +237,10 @@ def simulation_context(
         },
         "profiles": json.loads(json.dumps([p.model_dump() for p in profiles], default=str)),
         "datasets": datasets,
+        # Counted facts about file inputs, so the offline provider has
+        # something real to report for the majority of the fleet that
+        # reads files rather than tables.
+        "files": files or [],
         "parameters": parameters,
         "artifacts": [
             {

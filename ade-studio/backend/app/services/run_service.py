@@ -41,6 +41,8 @@ from app.ports.llm_provider import LLMProvider, LLMRequest
 from app.ports.repositories import ArtifactStore, ConnectionRepository, RunRepository
 from app.runtime import prompt as prompt_builder
 from app.services.catalog_service import CatalogService
+from app.services.input_service import InputService, ResolvedInput
+from app.services.input_service import brief_section as input_brief_section
 from app.services.model_registry import estimate_tokens, get_model
 
 logger = get_logger(__name__)
@@ -56,6 +58,7 @@ class RunService:
         connections: ConnectionRepository,
         settings: Settings,
         provider: LLMProvider | None = None,
+        inputs: InputService | None = None,
     ) -> None:
         self.catalog = catalog
         self.runs = runs
@@ -63,6 +66,7 @@ class RunService:
         self.connections = connections
         self.settings = settings
         self._provider_override = provider
+        self._inputs = inputs
 
     # ------------------------------------------------------------------ #
     # Provider selection
@@ -158,6 +162,76 @@ class RunService:
             raise NotFound(f"No connection {request.connection_id!r}.")
         return connection
 
+    def _input_gates(self, agent: AgentSpec, request: RunRequest) -> list[GateResult]:
+        """One gate per declared input slot.
+
+        Reported per slot rather than as a single verdict: "select at least one
+        object" is unhelpful for an agent that wants a metering export and an
+        incident summary. The operator should be told which of the things it
+        asked for is missing.
+        """
+        from app.runtime.input_contracts import slots_for
+
+        slots = slots_for(agent.id)
+        if not slots:
+            return [
+                GateResult(
+                    name="input_contract",
+                    passed=True,
+                    blocking=False,
+                    detail=(
+                        "This agent takes no direct input: everything it needs arrives from "
+                        "upstream agents through the dependency gate."
+                    ),
+                )
+            ]
+
+        missing: list[str] = []
+        supplied: list[str] = []
+        for slot in slots:
+            binding = request.inputs.get(slot.key)
+            filled = binding is not None and not binding.is_empty()
+            if filled:
+                supplied.append(slot.label)
+            elif slot.required:
+                missing.append(slot.label)
+
+        if missing:
+            return [
+                GateResult(
+                    name="input_contract",
+                    passed=False,
+                    detail=(
+                        f"{agent.name} needs: {', '.join(missing)}. "
+                        + (f"Supplied so far: {', '.join(supplied)}." if supplied else "")
+                    ).strip(),
+                )
+            ]
+        return [
+            GateResult(
+                name="input_contract",
+                passed=True,
+                detail=(
+                    f"Input contract satisfied: {', '.join(supplied)}."
+                    if supplied
+                    else "No required inputs for this agent."
+                ),
+            )
+        ]
+
+    def _resolve_inputs(self, agent: AgentSpec, request: RunRequest) -> list[ResolvedInput]:
+        """Fetch and read whatever the operator bound to this agent's slots.
+
+        Returns nothing when no input service is wired in — the engine is
+        constructible without one, which keeps unit tests that never touch a
+        file from having to stand up a document space.
+        """
+        from app.runtime.input_contracts import slots_for
+
+        if self._inputs is None:
+            return []
+        return self._inputs.resolve(slots_for(agent.id), request.inputs)
+
     def _evaluate_gates(
         self,
         agent: AgentSpec,
@@ -168,20 +242,11 @@ class RunService:
     ) -> list[GateResult]:
         gates: list[GateResult] = []
 
-        # 1. Object selection.
-        if agent.requires_dataset:
-            ok = bool(request.datasets)
-            gates.append(
-                GateResult(
-                    name="object_selection",
-                    passed=ok,
-                    detail=(
-                        f"{len(request.datasets)} object(s) selected."
-                        if ok
-                        else "This agent reasons over specific database objects; select at least one."
-                    ),
-                )
-            )
+        # 1. Input contract. Each agent declares the slots it needs, so the gate
+        #    asks for what that agent actually consumes rather than for a table
+        #    it may have no use for.
+        gates.extend(self._input_gates(agent, request))
+
         if len(request.datasets) > self.settings.max_objects_per_run:
             gates.append(
                 GateResult(
@@ -337,6 +402,19 @@ class RunService:
             profiles = self._profile(run, agent, request, connection)
             run.profiles = profiles
 
+            resolved = self._resolve_inputs(agent, request)
+            for entry in resolved:
+                if entry.facts:
+                    run.add_event(
+                        "Read input files",
+                        slot=entry.slot.key,
+                        files=len(entry.facts),
+                        origin=entry.binding.origin.value,
+                    )
+                for problem in entry.errors:
+                    run.add_event("Input file unreadable", level="warn", detail=problem)
+            supplied = input_brief_section(resolved)
+
             upstream = self._upstream_context(agent, request)
             effective_tier = agent.effective_tier(bool(connection and connection.regulated))
 
@@ -349,6 +427,7 @@ class RunService:
                 objective=request.objective,
                 upstream=upstream,
                 effective_tier=effective_tier.value,
+                supplied_inputs=supplied,
             )
 
             provider = self.provider()
@@ -366,6 +445,7 @@ class RunService:
                         profiles=profiles,
                         datasets=[d.fqn for d in request.datasets],
                         parameters=request.parameters,
+                        files=[f.as_dict() for e in resolved for f in e.facts],
                     ),
                 )
             )

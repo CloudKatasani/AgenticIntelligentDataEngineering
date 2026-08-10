@@ -36,9 +36,10 @@ class SimulationProvider(LLMProvider):
         datasets: list[str] = list(ctx.get("datasets") or [])
         artifacts: list[dict[str, Any]] = list(ctx.get("artifacts") or [])
         parameters: dict[str, Any] = dict(ctx.get("parameters") or {})
+        files: list[dict[str, Any]] = list(ctx.get("files") or [])
 
-        findings = _derive_findings(profiles)
-        summary = _summary(agent, datasets, profiles, findings)
+        findings = _derive_findings(profiles) + _derive_file_findings(files)
+        summary = _summary(agent, datasets, profiles, findings, files)
 
         payload: dict[str, Any] = {
             "summary": summary,
@@ -55,7 +56,7 @@ class SimulationProvider(LLMProvider):
 
         for spec in artifacts:
             payload["artifacts"][spec["key"]] = _compose(
-                spec, agent, datasets, profiles, findings, parameters
+                spec, agent, datasets, profiles, findings, parameters, files
             )
 
         return LLMResponse(
@@ -141,12 +142,122 @@ def _derive_findings(profiles: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return findings
 
 
+def _derive_file_findings(files: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Observations counted from file inputs.
+
+    The file counterpart to ``_derive_findings``: everything asserted here was
+    counted by the deterministic reader, so an offline run of a file-driven
+    agent still reports real structure rather than an empty artifact. Most of
+    the fleet reads files, so without this the offline mode would be blank for
+    the majority of it.
+    """
+    findings: list[dict[str, Any]] = []
+    writers: dict[str, list[str]] = {}
+
+    for item in files:
+        path = item.get("path") or item.get("file", "?")
+        details = item.get("findings") or {}
+
+        for entry in details.get("creates", []):
+            findings.append({
+                "table": entry["object"], "column": "", "category": "lineage",
+                "severity": "info",
+                "statement": (
+                    f"{path} creates {entry['object']} ({entry['type']})."
+                ),
+                "evidence": f"parsed from {path}",
+            })
+        for entry in details.get("writes", []):
+            writers.setdefault(entry["object"], []).append(path)
+        reads = details.get("reads", [])
+        if reads:
+            findings.append({
+                "table": "", "column": "", "category": "lineage",
+                "severity": "info",
+                "statement": (
+                    f"{path} reads {len(reads)} object(s): "
+                    + ", ".join(r["object"] for r in reads[:8])
+                    + ("…" if len(reads) > 8 else "")
+                ),
+                "evidence": f"parsed from {path}",
+            })
+
+        if (count := details.get("field_count")) is not None:
+            findings.append({
+                "table": path, "column": "", "category": "structure",
+                "severity": "info",
+                "statement": f"{path} defines {count} field(s) in a fixed-width record layout.",
+                "evidence": f"parsed from {path}",
+            })
+            if details.get("has_redefines"):
+                findings.append({
+                    "table": path, "column": "", "category": "structure",
+                    "severity": "warn",
+                    "statement": (
+                        f"{path} uses REDEFINES: the same bytes carry different meanings "
+                        "depending on context, which a naive column-per-field translation "
+                        "would get wrong."
+                    ),
+                    "evidence": f"REDEFINES present in {path}",
+                })
+
+        for column in details.get("columns", []):
+            nulls = int(column.get("null_count") or 0)
+            sampled = int(column.get("sampled") or 0)
+            if sampled and nulls:
+                findings.append({
+                    "table": path, "column": column["column"], "category": "completeness",
+                    "severity": "warn" if nulls < sampled * 0.2 else "error",
+                    "statement": (
+                        f"{path}:{column['column']} is empty in {nulls} of {sampled} rows."
+                    ),
+                    "evidence": f"null_count={nulls}, sampled={sampled}",
+                })
+            if "sum" in column:
+                findings.append({
+                    "table": path, "column": column["column"], "category": "measure",
+                    "severity": "info",
+                    "statement": (
+                        f"{path}:{column['column']} totals {column['sum']:,} across "
+                        f"{sampled} rows (min {column['min']}, max {column['max']})."
+                    ),
+                    "evidence": f"sum={column['sum']}, mean={column.get('mean')}",
+                })
+
+    # An object written by more than one file is a genuine finding rather than
+    # a formatting detail: two writers to one table is where silent divergence
+    # starts.
+    for obj, paths in writers.items():
+        if len(set(paths)) > 1:
+            findings.append({
+                "table": obj, "column": "", "category": "lineage",
+                "severity": "warn",
+                "statement": (
+                    f"{obj} is written by {len(set(paths))} separate files: "
+                    + ", ".join(sorted(set(paths)))
+                ),
+                "evidence": "multiple writers parsed",
+            })
+    return findings
+
+
 def _summary(
     agent: dict[str, Any],
     datasets: list[str],
     profiles: list[dict[str, Any]],
     findings: list[dict[str, Any]],
+    files: list[dict[str, Any]] | None = None,
 ) -> str:
+    files = files or []
+    if files and not profiles:
+        lines = sum(int(f.get('line_count') or 0) for f in files)
+        languages = sorted({f.get('language', '?') for f in files})
+        errors = sum(1 for f in findings if f['severity'] == 'error')
+        return (
+            f"{agent.get('name', 'Agent')} read {len(files)} file(s) "
+            f"({', '.join(languages)}; {lines:,} lines) and recorded {len(findings)} "
+            f"observation(s), {errors} of them errors."
+        )
     scope = ", ".join(datasets) if datasets else "the registered estate"
     rows = sum(int(p.get("row_count") or 0) for p in profiles)
     columns = sum(len(p.get("columns") or []) for p in profiles)
@@ -190,10 +301,11 @@ def _compose(
     profiles: list[dict[str, Any]],
     findings: list[dict[str, Any]],
     parameters: dict[str, Any],
+    files: list[dict[str, Any]] | None = None,
 ) -> Any:
     fmt = spec.get("format", "markdown")
     if fmt == "json":
-        return _json_artifact(spec, agent, profiles, findings)
+        return _json_artifact(spec, agent, profiles, findings, files or [])
     if fmt == "yaml":
         return _yaml_artifact(spec, agent, datasets, findings, parameters)
     if fmt == "sql":
@@ -210,6 +322,7 @@ def _json_artifact(
     agent: dict[str, Any],
     profiles: list[dict[str, Any]],
     findings: list[dict[str, Any]],
+    files: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     return {
         "generated_by": {"agent_id": agent.get("id"), "agent_name": agent.get("name")},
@@ -226,6 +339,7 @@ def _json_artifact(
             }
             for p in profiles
         ],
+        "sources": files or [],
         "observations": findings,
     }
 
