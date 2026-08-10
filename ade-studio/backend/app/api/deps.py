@@ -12,6 +12,7 @@ from app.adapters.storage.json_repositories import (
 )
 from app.core.config import Settings, get_settings
 from app.services.academy_service import AcademyService
+from app.services.canvas_service import CanvasService
 from app.services.catalog_service import CatalogService, get_catalog_service
 from app.services.graph_service import GraphService
 from app.services.input_service import InputService
@@ -47,6 +48,11 @@ def get_input_service() -> InputService:
 @lru_cache(maxsize=1)
 def get_graph_service() -> GraphService:
     return GraphService(get_catalog_service())
+
+
+@lru_cache(maxsize=1)
+def get_canvas_service() -> CanvasService:
+    return CanvasService(get_catalog_service())
 
 
 @lru_cache(maxsize=1)

@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api.routers import (
     academy,
     agents,
+    canvas,
     connections,
     graph,
     health,
@@ -61,6 +62,7 @@ def create_app() -> FastAPI:
         academy.router,
         observability.router,
         inputs.router,
+        canvas.router,
     ):
         app.include_router(router)
 

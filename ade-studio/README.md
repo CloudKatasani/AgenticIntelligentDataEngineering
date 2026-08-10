@@ -148,6 +148,31 @@ Each agent has a file contract: agent 07 emits `schema.sql`, `schema-contract.ya
 individually or as a zip containing a `MANIFEST.json` with full provenance — model,
 effort, gates, objects, token usage and approval record.
 
+### Canvas — a worked example for every agent
+
+The tab built for the demo. For each of the 35 agents: the exact input it is
+given on the left, the agent in the middle, and the artifacts it generates on
+the right — full file bodies, not summaries. A COBOL copybook in, a rule
+inventory with file-and-line citations out.
+
+All 35 are set in **one estate telling one story**: a mainframe customer master
+and a legacy warehouse becoming a certified customer-360 product. Read end to
+end they are a single migration; read one at a time, each is a demo of one
+agent. The objects are the ones in the seeded demo warehouse and sample file
+workspace, so "can I see that for real?" runs the same configuration rather
+than a different one.
+
+Each example also carries **what to point at** — the moments that answer a data
+leader's actual question — and **what it refused to do**, with the agent that
+owns that work instead.
+
+Two things keep it honest. Every example is labelled an illustration rather
+than a run record, with a live run one click away. And the artifact filenames,
+their deterministic-versus-reasoned labels, and the input kinds are all
+validated against the live catalog in CI — so an example cannot drift into
+showing something the product no longer does. That check caught a real drift
+the first time it ran.
+
 ### Observability and FinOps
 
 A tab that answers the four questions a client asks after the pilot: which of the 35
@@ -219,9 +244,10 @@ backend/app/
 │   ├── deterministic/profiler.py   Every number an agent reports about a table
 │   ├── deterministic/artifacts.py  Every number it reports about a file
 │   ├── input_contracts.py          What each of the 35 agents asks you for
+│   ├── canvas/                     A worked example per agent, one story
 │   ├── prompt.py                   SKILL.md verbatim + task brief + output schema
 │   └── artifact_plans.py           Per-agent file contracts and parameters
-├── services/      Catalog, graph, models, runs, academy, observability
+├── services/      Catalog, graph, models, runs, academy, observability, canvas
 └── api/           FastAPI routers; deps.py is the composition root
 ```
 
@@ -234,7 +260,7 @@ outputs, so a new spec is runnable immediately.
 ## Tests
 
 ```bash
-backend/.venv/bin/python -m pytest backend        # 156 tests
+backend/.venv/bin/python -m pytest backend        # 444 tests
 node frontend/scripts/e2e-smoke.mjs               # drives a real run through the UI
 ```
 
