@@ -134,10 +134,10 @@ the tab says plainly that it is declared rather than authenticated.
 `spec.yaml` and `SKILL.md`, so the training material cannot drift from the
 contract the runtime enforces.
 
-Two more moments if you have time: **agent 33** blocks on a missing required
-parameter (`Fleet goal`) rather than guessing one, and **agent 20** refuses to
-execute against production at all — its remediation output is always a
-reviewable plan.
+Two more moments if you have time: **agent 33** blocks with "Supervisor /
+Orchestrator Agent needs: Fleet goal and scope" rather than guessing an
+objective, and **agent 20** refuses to execute against production at all — its
+remediation output is always a reviewable plan.
 
 ## What's in the sample file workspace
 
