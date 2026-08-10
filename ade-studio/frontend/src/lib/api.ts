@@ -18,9 +18,15 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  // FormData must set its own Content-Type: the browser appends a multipart
+  // boundary the server needs, and any value we supply replaces it with one
+  // that has no boundary at all.
+  const isForm = init?.body instanceof FormData
   const response = await fetch(path, {
     ...init,
-    headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
+    headers: isForm
+      ? (init?.headers ?? {})
+      : { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
   })
   if (!response.ok) {
     let code = 'http_error'
@@ -45,6 +51,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   get: <T,>(path: string) => request<T>(path),
+  /**
+   * Multipart upload. The Content-Type header is deliberately not set:
+   * the browser has to add its own multipart boundary, and overriding it
+   * produces a request the server cannot parse.
+   */
+  postForm: <T,>(path: string, form: FormData) =>
+    request<T>(path, { method: 'POST', body: form }),
   post: <T,>(path: string, body: unknown) =>
     request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
   put: <T,>(path: string, body: unknown) =>

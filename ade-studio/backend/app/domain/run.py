@@ -7,6 +7,7 @@ from enum import Enum
 from pydantic import BaseModel, Field
 
 from app.domain.connection import DatasetRef, TableProfile
+from app.domain.input_contract import InputBinding
 from app.domain.model import ModelSelection, TokenUsage
 
 
@@ -83,6 +84,13 @@ class RunRequest(BaseModel):
     agent_id: str
     connection_id: str | None = None
     datasets: list[DatasetRef] = Field(default_factory=list)
+    """Flattened from the input bindings, because the object budget, the
+    dependency scope and the profiler all reason over "the tables this run
+    touches" regardless of which slot they arrived in."""
+
+    inputs: dict[str, InputBinding] = Field(default_factory=dict)
+    """What the operator supplied, keyed by the agent's own slot keys."""
+
     model: ModelSelection
     parameters: dict[str, object] = Field(default_factory=dict)
     objective: str = ""

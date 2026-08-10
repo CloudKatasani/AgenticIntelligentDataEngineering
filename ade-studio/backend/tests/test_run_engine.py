@@ -12,17 +12,20 @@ from app.domain.connection import DatasetRef, Environment
 from app.domain.model import Effort, ModelSelection
 from app.domain.run import RunRequest, RunStatus
 from app.services.run_service import RunService
-
-CUSTOMERS = DatasetRef(
-    connection_id="conn_demo", database="ADE_DEMO", schema_name="RETAIL", table="CUSTOMERS"
-)
+from tests.support import CUSTOMERS, bindings_for
 
 
 def _request(agent_id: str, **overrides) -> RunRequest:
+    """A request that satisfies the agent's own input contract.
+
+    Built from the contract rather than from a fixed table list, so these tests
+    keep testing the guardrail rather than a shape the product outgrew.
+    """
     payload = {
         "agent_id": agent_id,
         "connection_id": "conn_demo",
         "datasets": [CUSTOMERS],
+        "inputs": bindings_for(agent_id),
         "model": ModelSelection(model_id="claude-haiku-4-5", effort=Effort.MEDIUM),
         "parameters": {"sample_rows": 100},
     }
@@ -157,21 +160,50 @@ def test_agent_20_never_executes_against_production(run_service: RunService) -> 
     assert gate.passed is False
 
 
-def test_required_parameters_are_enforced(run_service: RunService) -> None:
-    run = run_service.execute(_request("31", datasets=[]))
-    assert run.status is RunStatus.BLOCKED
-    assert "Business question" in (run.error or "")
-
-
-def test_object_selection_is_required_for_dataset_scoped_agents(
+def test_each_agent_is_blocked_on_the_input_it_actually_needs(
     run_service: RunService,
 ) -> None:
-    run = run_service.execute(_request("01", datasets=[]))
-    assert run.status is RunStatus.BLOCKED
+    """The gate asks each agent's own question, not one shared question.
 
-    # Estate-scoped agents do not need objects.
-    estate = run_service.execute(_request("22", datasets=[]))
-    assert estate.status is not RunStatus.BLOCKED
+    Agent 01 profiles tables, agent 22 reads a metering export, agent 31 needs
+    a written question. Before the input contract these all failed the same
+    "select an object" check, which was wrong for two of the three.
+    """
+    profiling = run_service.execute(_request("01", inputs={}))
+    assert profiling.status is RunStatus.BLOCKED
+    assert "Database objects" in (profiling.error or "")
+
+    finops = run_service.execute(_request("22", inputs={}))
+    assert finops.status is RunStatus.BLOCKED
+    assert "metering" in (finops.error or "").lower()
+
+    analyst = run_service.execute(_request("31", inputs={}))
+    assert analyst.status is RunStatus.BLOCKED
+    assert "question" in (analyst.error or "").lower()
+
+
+def test_an_agent_needing_no_objects_is_not_asked_for_any(
+    run_service: RunService,
+) -> None:
+    """Agent 22 reads a file, so an empty table list is not a problem for it."""
+    run = run_service.execute(_request("22", datasets=[]))
+    assert run.status is not RunStatus.BLOCKED
+    assert run.artifacts
+
+
+def test_upstream_fed_agents_ask_the_operator_for_nothing(
+    run_service: RunService,
+) -> None:
+    """Agents 09 and 11 receive everything through the dependency gate.
+
+    Their gate must pass with no operator input at all — the correct answer to
+    "what do you need from me" is nothing.
+    """
+    for agent_id in ("09", "11"):
+        run = run_service.execute(
+            _request(agent_id, inputs={}, override_dependency_gate=True, override_reason="test")
+        )
+        assert run.status is not RunStatus.BLOCKED, f"agent {agent_id}: {run.error}"
 
 
 def test_bundle_contains_every_artifact_and_a_manifest(run_service: RunService) -> None:

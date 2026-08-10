@@ -5,11 +5,16 @@ from __future__ import annotations
 from functools import lru_cache
 
 from app.adapters.storage.filesystem_artifact_store import FilesystemArtifactStore
-from app.adapters.storage.json_repositories import JsonConnectionRepository, JsonRunRepository
+from app.adapters.storage.json_repositories import (
+    JsonConnectionRepository,
+    JsonDocumentSpaceRepository,
+    JsonRunRepository,
+)
 from app.core.config import Settings, get_settings
 from app.services.academy_service import AcademyService
 from app.services.catalog_service import CatalogService, get_catalog_service
 from app.services.graph_service import GraphService
+from app.services.input_service import InputService
 from app.services.observability_service import ObservabilityService
 from app.services.run_service import RunService
 
@@ -27,6 +32,16 @@ def get_artifact_store() -> FilesystemArtifactStore:
 @lru_cache(maxsize=1)
 def get_connection_repository() -> JsonConnectionRepository:
     return JsonConnectionRepository(get_settings().connections_path)
+
+
+@lru_cache(maxsize=1)
+def get_space_repository() -> JsonDocumentSpaceRepository:
+    return JsonDocumentSpaceRepository(get_settings().spaces_path)
+
+
+@lru_cache(maxsize=1)
+def get_input_service() -> InputService:
+    return InputService(get_space_repository(), get_settings().uploads_dir)
 
 
 @lru_cache(maxsize=1)
@@ -52,6 +67,7 @@ def get_run_service() -> RunService:
         artifacts=get_artifact_store(),
         connections=get_connection_repository(),
         settings=get_settings(),
+        inputs=get_input_service(),
     )
 
 

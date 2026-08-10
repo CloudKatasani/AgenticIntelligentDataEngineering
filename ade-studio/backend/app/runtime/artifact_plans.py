@@ -502,7 +502,21 @@ def plan_for(agent_id: str, outputs: list[str]) -> list[ArtifactSpec]:
 
 
 def parameters_for(agent_id: str) -> list[AgentParameter]:
-    return _BASE_PARAMETERS + _AGENT_PARAMETERS.get(agent_id, [])
+    """Run knobs, minus anything the agent's input contract already asks for.
+
+    Some agents declared a parameter for the same thing their input slot now
+    covers — agent 33's fleet goal, agent 24's backfill request. Leaving both in
+    place would show the operator two boxes for one answer and then block the
+    run on the one they did not fill in.
+    """
+    from app.runtime.input_contracts import SUPERSEDED_PARAMETERS, slots_for
+
+    owned = {slot.key for slot in slots_for(agent_id)} | SUPERSEDED_PARAMETERS.get(agent_id, set())
+    return [
+        parameter
+        for parameter in _BASE_PARAMETERS + _AGENT_PARAMETERS.get(agent_id, [])
+        if parameter.key not in owned
+    ]
 
 
 def requires_dataset(agent_id: str) -> bool:

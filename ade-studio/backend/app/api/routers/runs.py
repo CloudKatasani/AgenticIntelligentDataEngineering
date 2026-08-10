@@ -10,6 +10,8 @@ from pydantic import BaseModel, Field
 
 from app.api.deps import get_artifact_store, get_run_repository, get_run_service
 from app.core.errors import NotFound
+from app.domain.connection import DatasetRef
+from app.domain.input_contract import InputBinding, InputOrigin
 from app.domain.model import Effort, ModelSelection
 from app.domain.run import RunRequest
 from app.services.run_service import dataset_from_dict
@@ -24,10 +26,24 @@ class DatasetInput(BaseModel):
     columns: list[str] = Field(default_factory=list)
 
 
+class BindingInput(BaseModel):
+    """What the operator supplied for one of the agent's declared slots."""
+
+    origin: InputOrigin
+    connection_id: str | None = None
+    datasets: list[DatasetInput] = Field(default_factory=list)
+    file_ids: list[str] = Field(default_factory=list)
+    text: str = ""
+
+
 class RunInput(BaseModel):
     agent_id: str
     connection_id: str | None = None
     datasets: list[DatasetInput] = Field(default_factory=list)
+    """Legacy flat form, kept so an existing integration keeps working. New
+    callers use `inputs`, which says which slot each object list answers."""
+
+    inputs: dict[str, BindingInput] = Field(default_factory=dict)
     model_id: str
     effort: Effort = Effort.HIGH
     max_output_tokens: int = 16_000
@@ -39,13 +55,42 @@ class RunInput(BaseModel):
     override_reason: str = ""
 
     def to_domain(self) -> RunRequest:
+        bindings: dict[str, InputBinding] = {}
+        for key, binding in self.inputs.items():
+            connection_id = binding.connection_id or self.connection_id or ""
+            bindings[key] = InputBinding(
+                slot_key=key,
+                origin=binding.origin,
+                connection_id=binding.connection_id or self.connection_id,
+                datasets=[
+                    dataset_from_dict(connection_id, d.model_dump()).model_dump()
+                    for d in binding.datasets
+                ],
+                file_ids=binding.file_ids,
+                text=binding.text,
+            )
+
+        # Every table any slot points at, flattened once. The object budget,
+        # the dependency scope and the profiler all reason over "the tables
+        # this run touches" and should not care which slot they came from.
+        datasets = [
+            dataset_from_dict(self.connection_id or "", d.model_dump()) for d in self.datasets
+        ]
+        seen = {d.fqn for d in datasets}
+        for binding in bindings.values():
+            for raw in binding.datasets:
+                dataset = DatasetRef.model_validate(raw)
+                if dataset.fqn not in seen:
+                    seen.add(dataset.fqn)
+                    datasets.append(dataset)
+
         return RunRequest(
             agent_id=self.agent_id,
-            connection_id=self.connection_id,
-            datasets=[
-                dataset_from_dict(self.connection_id or "", d.model_dump())
-                for d in self.datasets
-            ],
+            connection_id=self.connection_id or next(
+                (b.connection_id for b in bindings.values() if b.connection_id), None
+            ),
+            datasets=datasets,
+            inputs=bindings,
             model=ModelSelection(
                 model_id=self.model_id,
                 effort=self.effort,
